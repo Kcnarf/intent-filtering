@@ -29,7 +29,7 @@ class RatingBucketOut(BaseModel):
     count: int
 
 
-class MoviesStatsOut(BaseModel):
+class MoviesStatOut(BaseModel):
     total_count: int
     average_rating: float | None
     total_votes: int | None
