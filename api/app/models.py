@@ -32,5 +32,5 @@ class MoviePerson(Base):
 
     movie_id: Mapped[str] = mapped_column(String, ForeignKey("movies.id"), primary_key=True)
     person_id: Mapped[str] = mapped_column(String, ForeignKey("people.id"), primary_key=True)
-    ordering: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    ordering: Mapped[int] = mapped_column(Integer, primary_key=True)
     category: Mapped[str | None] = mapped_column(String, nullable=True)
