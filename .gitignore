@@ -1,0 +1,11 @@
+# Python
+api/.venv/
+api/data/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# macOS
+.DS_Store

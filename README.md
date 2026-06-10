@@ -43,6 +43,19 @@ The current stage is **STAGE 1 - Backend**
 ./frontend/             frontend SPA (Stage 2)
 ```
 
+# Prerequisites
+The backend part of the project uses `uv` as Python installer and dependency manager.
+
+If not yet installed, install `uv` via the standalone installer (works on all macOS versions — do not use Homebrew for uv):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then install Python 3.12 via uv (no separate Python installation needed):
+```bash
+uv python install 3.12
+```
+
 # Quick start
 
 Run the ETL script once to build the local database (requires an internet connection, ~5 min):
