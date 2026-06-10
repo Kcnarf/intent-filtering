@@ -1,27 +1,47 @@
 # Testing Conventions
 
-This document outlines testing conventions for the project. All contributors should follow these patterns when writing or modifying tests.
+This document outlines testing conventions. All contributors should follow these patterns when writing or modifying tests.
 
-## Test Stack
+The documents starts with generic rules and guidelines, then provides project-specific ones.
 
-## Backend
+## Test Organization Structure
 
-TODO: which framework
-Backend test files live in the `./api/test/` directory.
+Group tests by API endpoints, function or parameter, not by outcome (error vs. success). Each parameter gets its own test group containing both the "provided" and "omitted" cases.
 
-## Frontend
+**Structure example:**
+```
+describe('first-function-name'):
+  describe('first-parameter-name'):
+    test('should accept value with expected syntax')
+    test('should throw an error if vlue value is syntaxically invalid')
+    test('should call sub-method with correct value when provided')
+    test('should not call sub-method when parameter omitted')
+    ...
+  describe('second-parameter-name')
+  ...
+describe('second-function-name')
+...
+```
 
-Frontend will not be tested
+**Why:** Makes it easy to understand all aspects of a single parameter; improves test discoverability.
 
-**Rationale:** backend will be well tested in order to guarantee correct API responses (i.e. data retrieval). Frontend is the presentation layer of the app, and UI issues will quickly be spotted if any. Moreover, it's an experimentation project, so relying on correct backend responses seems required but experimentations on frontend does not need this security harness.
+**Group examples:**
+- `describe('model-name/POST endpoint', ...)`
+- `describe('function foo()', ...)`
 
-## Scope: for now, Integration Tests of the backend only
+## Test Description Format
 
-This project currently focuses on **integration test of the backend API**, in order to check API responds the right way.
+Every test description must start with "should" to clearly state expected behavior.
 
-**If unit tests are ever added:** They would follow the patterns defined in [Unit Tests: Code Responsability](#unit-tests-code-responsibility) below.
+**Examples:**
+- ✅ "should call split() with the correct separator" / ❌ "split() is called with the correct separator"
+- ✅ "should not call split() when input is empty" / ❌ "split() not called when input is empty"
 
-## Unit Tests: Code Responsibility
+**Why:** Creates consistent, behavior-focused documentation; makes expected behavior immediately clear.
+
+## Unit Tests
+
+### Unit Tests: Code Responsibility
 
 Unit tests focus exclusively on your code's behavior, not on the behavior of functions it calls.
 
@@ -41,47 +61,13 @@ Unit tests focus exclusively on your code's behavior, not on the behavior of fun
 
 **The key question:** Before writing any test, ask: "Who is responsible for this behavior — my code, or a dependency?" If the answer is a dependency, don't test it.
 
-## Integration Tests: Code Responsibility
-
-TODO
-
-## Test Description Format
-
-Every test description must start with "should" to clearly state expected behavior.
-
-**Examples:**
-- ✅ "should call split() with the correct separator"
-- ✅ "should not call split() when input is empty"
-- ❌ "split() is called with the correct separator"
-- ❌ "split() not called when input is empty"
-
-**Why:** Creates consistent, behavior-focused documentation; makes expected behavior immediately clear.
-
-## Test Organization Structure
-
-Group tests by function or parameter, not by outcome (error vs. success). Each parameter gets its own test group containing both the "provided" and "omitted" cases.
-
-**Structure:**
-```
-describe('parameter-name'):
-  test('should call method with correct value when provided')
-  test('should not call method when parameter omitted')
-```
-
-**Why:** Makes it easy to understand all aspects of a single parameter; improves test discoverability.
-
-**Example groups:**
-- `test('separator parameter', ...)`
-- `test('limit parameter', ...)`
-- `test('case-sensitivity option', ...)`
-
-## Parameter Passing Verification
+### Unit Tests: Parameter Passing Verification
 
 Use stubs to directly verify that called methods are called with correct parameters. Do not infer parameter passing from output behavior.
 
 **Why:** Tests the implementation contract explicitly; catches parameter mismatches without relying on behavior inference; enables verification that methods are NOT called when parameters are omitted.
 
-## Edge Case Testing
+### Unit Tests: Edge Case Testing
 
 For error conditions, test both the failure case AND the success boundary case.
 
@@ -90,6 +76,29 @@ For error conditions, test both the failure case AND the success boundary case.
 - ✅ "should not throw error for array with a single element" (success boundary)
 
 **Why:** Ensures error checks are precise; prevents false positives; documents what inputs ARE allowed.
+
+## Integration Tests
+
+TODO : section defined collaboratively during Stage 1 (backend development), based on the actual API endpoints and test strategy.
+
+## Project's Test Stack
+
+### Backend
+
+TODO: which framework
+Backend test files live in the `./api/test/` directory.
+
+### Frontend
+
+Frontend will not be tested
+
+**Rationale:** backend will be well tested in order to guarantee correct API responses (i.e. data retrieval). Frontend is the presentation layer of the app, and UI issues will quickly be spotted if any. Moreover, it's an experimentation project, so relying on correct backend responses seems required but experimentations on frontend does not need this security harness.
+
+## Project's Test Scope: for now, Integration Tests of the backend only
+
+This project currently focuses on **integration test of the backend API**, in order to check API responds the right way.
+
+**If unit tests are ever added:** They would follow the patterns defined in [Unit Tests: Code Responsibility](#unit-tests-code-responsibility) above.
 
 ## Running Tests
 

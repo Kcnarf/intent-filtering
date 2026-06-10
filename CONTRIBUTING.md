@@ -1,4 +1,4 @@
-# Contributing to Voronoi Map MCP Server
+# Contributing to intent-filtering project
 
 First off, thank you for considering contributing to this project!
 
@@ -24,23 +24,23 @@ All types of contributions are welcome! This includes:
 
 ## Reporting Issues
 
-Found a bug? Have a feature idea? Please [open an issue](https://github.com/Kcnarf/voronoi-map-mcp-server/issues) on GitHub. Include:
+Found a bug? Have a feature idea? Please [open an issue](https://github.com/Kcnarf/intent-filtering/issues) on GitHub. Include:
 - A clear description of the issue
 - Steps to reproduce (for bugs)
 - Expected vs. actual behavior
 
 ## Getting Help
 
-Questions or need clarification? Feel free to [open a discussion](https://github.com/Kcnarf/voronoi-map-mcp-server/discussions) or [file an issue](https://github.com/Kcnarf/voronoi-map-mcp-server/issues).
+Questions or need clarification? Feel free to [open a discussion](https://github.com/Kcnarf/intent-filtering/discussions) or [file an issue](https://github.com/Kcnarf/intent-filtering/issues).
 
 ## Development Setup
 
-**Requirements:** Node.js 18 or 20
+**Requirements:** TODO
 
 ```bash
 yarn install            # Install dependencies
-yarn test               # Run test suite
 ```
+TODO : replace above commands with project-specific ones
 
 ## Testing
 
@@ -48,10 +48,10 @@ Please see [TESTING.md](TESTING.md) for detailed information on our testing prac
 
 ## Proposing Code Changes
 
-1. `git clone https://github.com/Kcnarf/voronoi-map-mcp-server.git`
-2. `yarn install`
+1. `git clone https://github.com/Kcnarf/intent-filtering.git`
+2. `yarn install` (TODO: replace with project-specific)
 3. Make your changes, then:
-   - `yarn test` to check for side effects
+   - `yarn test` to check for side effects (TODO: replace with project-specific)
    - Add or update tests if introducing new API or behavior
 4. `git commit` with an adequate message (see [Commit Messages](#commit-messages) below)
 5. `git push`
@@ -69,7 +69,7 @@ Use a short (~50 character) title followed by a blank line and additional detail
 ### Title Format
 
 Optionally prefix the title with a category tag for non-feature changes:
-- `[docs]` — Documentation updates
+- `[doc]` — Documentation updates
 - `[fix]` — Bug fixes
 - `[QA]` — Test and quality assurance updates
 - `[CI]` — CI integration and workflow updates
@@ -82,26 +82,23 @@ Include the issue number for traceability, especially for bug fixes: `[fix] bug_
 
 **Feature (no prefix):**
 ```
-Add site coordinates to cell output for label placement
+Add pagination support to the list endpoint
 
-This allows clients to position labels at the cell centroid
-without needing to compute polygon centers themselves.
+This allows clients to retrieve large result sets incrementally without loading all records in a single response.
 ```
 
 **Bug fix (with prefix and issue number):**
 ```
-[fix] resolve polygon validation crash on degenerate shapes (#42)
+[fix] resolve crash when filter value is an empty string (#42)
 
-Add bounds checking before computing convex hull to prevent
-TypeError when input polygon has fewer than 3 unique points.
+Add null-check before passing filter to the query builder to prevent TypeError when the user submits an empty search input.
 ```
 
 **Documentation update (with prefix):**
 ```
-[docs] strengthen CONTRIBUTING.md with comprehensive contributor guidance
+[doc] strengthen CONTRIBUTING.md with comprehensive contributor guidance
 
-Add missing sections for issue reporting, help channels, and PR process
-to improve the contributor experience.
+Add missing sections for issue reporting, help channels, and PR process to improve the contributor experience.
 ```
 
 ## Versioning
@@ -111,7 +108,3 @@ This project attempts to follow [semantic versioning](https://semver.org). The m
 ## Code of Conduct
 
 This project adheres to the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/0/code_of_conduct/). By participating, you are expected to uphold this code.
-
-## License
-
-This project is licensed under the **BSD 3-Clause License**. See the [LICENSE](LICENSE) file for details. By contributing, you agree that your contributions will be licensed under the same license.
