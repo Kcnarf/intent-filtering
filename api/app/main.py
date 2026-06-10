@@ -4,11 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
+from .database import create_tables
+from . import models  # noqa: F401 — registers ORM models with Base.metadata
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # database table creation will be added in sub-task 2
+    await create_tables()
     yield
 
 
