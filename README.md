@@ -58,15 +58,25 @@ uv python install 3.12
 
 # Quick start
 
-Run the ETL script once to build the local database (requires an internet connection, ~5 min):
+Install dependencies:
 ```bash
 cd api
+uv sync
+```
+
+Run the ETL script once to build the local database (requires an internet connection, ~5 min):
+```bash
 uv run python scripts/etl.py
 ```
 
-Then launch the backend API:
+Launch the backend API:
 ```bash
 uv run uvicorn app.main:app --reload
+```
+
+Run the test suite:
+```bash
+uv run pytest
 ```
 
 Launch the frontend (Stage 2):

@@ -50,17 +50,17 @@ This project also serves as a portfolio showcase ("vitrine") of agent-human HITL
 |---|---|---|
 | `movies` | tconst PK, primaryTitle, startYear, runtimeMinutes, genres, averageRating, numVotes | title.basics + title.ratings |
 | `people` | nconst PK, primaryName, birthYear | name.basics |
-| `movie_people` | tconst FK, nconst FK, ordering, category | title.principals |
+| `movie_people` | (tconst, nconst, ordering) composite PK, category | title.principals |
 
-Scope filter applied at ETL time: `titleType = 'movie'` and `numVotes >= 1000` (~80K rows).
+Scope filter applied at ETL time: `titleType = 'movie'` and `numVotes >= 1000` (~50K rows).
 
 ### API endpoints
 
 | Endpoint | Stage | Purpose |
 |---|---|---|
-| `GET /movies` | 1 | Returns movies matching a structured filter object |
-| `GET /aggregates` | 1 | Returns Big Numbers (total count, average rating, top genre, …) for a filter |
-| `POST /intent` | 3 | Accepts raw natural language text, returns a structured filter object (LLM API call, server-side) |
+| `GET /api/movies` | 1 | Returns paginated movies matching a structured filter object |
+| `GET /api/movies/stat` | 1 | Returns stats (total count, average rating, total votes, rating distribution) for a filter |
+| `POST /api/intent` | 3 | Accepts raw natural language text, returns a structured filter object (LLM API call, server-side) |
 
 The structured filter object is the shared contract between frontend and backend. Its shape is defined by a Pydantic model in the backend and reused across all three endpoints.
 
@@ -68,20 +68,26 @@ The structured filter object is the shared contract between frontend and backend
 
 React / Next.js SPA with Tailwind CSS. Single dashboard page: Big Numbers dataviz + filter panel. No paginated list of films — the primary view is aggregated.
 
-**Source files** (planned, will be updated as implementation proceeds):
+**Source files**:
 ```
 api/
   app/
-    main.py           FastAPI app entry point, CORS config
+    config.py         pydantic-settings: DB path, CORS origins, LLM API key
+    main.py           FastAPI app entry point, CORS config, lifespan
+    database.py       async engine + session factory + create_tables()
     models.py         SQLAlchemy ORM models (movies, people, movie_people)
-    schemas.py        Pydantic models (filter object, response shapes)
-    database.py       async engine + session factory
+    schemas.py        Pydantic models (FilterParams, MovieOut, MoviesStatOut, …)
     routers/
-      movies.py       GET /movies
-      aggregates.py   GET /aggregates
-      intent.py       POST /intent (Stage 3)
+      __init__.py     shared apply_filters() helper
+      movies.py       GET /api/movies
+      movies_stat.py  GET /api/movies/stat
+      intent.py       POST /api/intent (Stage 3)
   scripts/
     etl.py            one-time ETL: download IMDb TSVs → SQLite
+  tests/
+    conftest.py       shared async client fixture
+    test_main.py      GET /health, CORS middleware
+    test_routers.py   GET /api/movies, GET /api/movies/stat
   data/               gitignored
 ```
 
@@ -113,7 +119,7 @@ uv run pytest
 
 **Filter surface (Stage 1–2)**: genre, year range, minimum rating, minimum vote count. People-based filters (director, actor) planned for Stage 5.
 
-**Big Numbers (Stage 1–2)**: total matching films, average rating, top genre by count.
+**Movies stat (Stage 1–2)**: total matching films, average rating, total votes, rating distribution (9 buckets from 1-2 to 9-10).
 
 ## Testing
 
