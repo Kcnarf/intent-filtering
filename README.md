@@ -113,7 +113,7 @@ pnpm install
 pnpm dev
 ```
 
-Copy `.env.local.example` (or create `.env.local`) and set:
+Create `.env.local` and set:
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```

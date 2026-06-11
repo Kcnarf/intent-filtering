@@ -102,7 +102,7 @@ frontend/
       BigNumber.tsx   reusable stat card: type ('total_count'|'average_rating'|'total_votes'), value, optional children slot
       MovieList.tsx   movie list pre-sorted by average_rating desc
       FilterChips.tsx always-visible active filter chips with remove buttons
-      FilterPanel.tsx filter controls: genre Select, year inputs, rating Slider, votes Select
+      FilterPanel.tsx filter controls: genre Select, year inputs (cross-validated: min≤max), rating Slider, votes Select
       IntentInput.tsx Stage 3 placeholder (disabled textarea)
     lib/
       types.ts        TS interfaces mirroring API Pydantic schemas
@@ -153,6 +153,8 @@ pnpm tsc --noEmit
 **Filter surface (Stage 1–2)**: genre, year range, minimum rating, minimum vote count. People-based filters (director, actor) planned for Stage 5.
 
 **Movies stat (Stage 1–2)**: total matching films, average rating, total votes, rating distribution (9 buckets from 1-2 to 9-10).
+
+**Year range constraint**: `FilterParams` enforces `year_min ≤ year_max` via a Pydantic v2 `model_validator`. Violations return HTTP 422. A companion `ValidationError` exception handler in `main.py` is required because FastAPI does not automatically intercept Pydantic errors raised from `Depends()` models (only from request body parsing).
 
 ## Testing
 
