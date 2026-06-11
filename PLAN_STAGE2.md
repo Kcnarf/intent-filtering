@@ -15,8 +15,8 @@
 | 1 | `[x]` | API layer | `src/lib/types.ts`, `src/lib/api.ts` |
 | 2 | `[x]` | BigNumber component | `src/components/BigNumber.tsx` |
 | 3 | `[x]` | MovieList component | `src/components/MovieList.tsx` |
-| 4 | `[~]` | Filter components | `src/components/FilterChips.tsx`, `src/components/FilterPanel.tsx` |
-| 5 | `[ ]` | IntentInput placeholder | `src/components/IntentInput.tsx` |
+| 4 | `[x]` | Filter components | `src/components/FilterChips.tsx`, `src/components/FilterPanel.tsx` |
+| 5 | `[~]` | IntentInput placeholder | `src/components/IntentInput.tsx` |
 | 6 | `[ ]` | Main page + layout | `src/app/page.tsx`, `src/app/layout.tsx` |
 
 **Strict mode**: each task follows code → **wait for human approval** → next task.
