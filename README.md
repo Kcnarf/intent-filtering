@@ -14,7 +14,7 @@ This project follows 5 stages :
   **STAGE 4 - Deployment**: deploy the MVP as a live demo (Fly.io for the backend, Vercel for the frontend)
   **STAGE 5 - Scaling**: add many filters to evaluate scalability of the approach
 
-The current stage is **STAGE 1 - Backend**
+The current stage is **STAGE 2 - Frontend**
 
 # Stack
 
@@ -26,8 +26,11 @@ The current stage is **STAGE 1 - Backend**
 | Database | SQLite |
 | SQL middleware | SQLAlchemy 2.0 async + aiosqlite |
 | Data validation | Pydantic v2 (bundled with FastAPI) |
-| Frontend framework | React / Next.js (Stage 2) |
-| Styling | Tailwind CSS (Stage 2) |
+| Frontend framework | Next.js 16 (App Router) + React 19 |
+| Frontend language | TypeScript |
+| Frontend package manager | pnpm |
+| Component library | shadcn/ui |
+| Styling | Tailwind CSS v4 |
 | NLP | LLM API call from FastAPI backend (Stage 3) |
 | Backend hosting | Fly.io (Stage 4) |
 | Frontend hosting | Vercel (Stage 4) |
@@ -40,11 +43,28 @@ The current stage is **STAGE 1 - Backend**
     etl.py              downloads IMDb TSVs, builds the SQLite database
   data/                 gitignored — generated locally by running etl.py
     imdb.db             SQLite database
-./frontend/             frontend SPA (Stage 2)
+./frontend/             frontend SPA (Next.js, App Router)
+  src/
+    app/
+      layout.tsx        root layout, metadata, fonts
+      page.tsx          main dashboard page (state + layout)
+      globals.css       Tailwind base styles
+    components/
+      ui/               shadcn/ui generated components
+      BigNumber.tsx     reusable stat card (type, value, optional children)
+      MovieList.tsx     movie list sorted by descending score
+      FilterChips.tsx   active filter chips (always visible, removable)
+      FilterPanel.tsx   filter controls (genre, year, rating, votes)
+      IntentInput.tsx   Stage 3 placeholder textarea
+    lib/
+      types.ts          TypeScript interfaces matching API schemas
+      api.ts            fetchMoviesStat(), fetchMovies()
+  .env.local            gitignored — set NEXT_PUBLIC_API_URL
 ```
 
 # Prerequisites
-The backend part of the project uses `uv` as Python installer and dependency manager.
+
+**Backend** — uses `uv` as Python installer and dependency manager.
 
 If not yet installed, install `uv` via the standalone installer (works on all macOS versions — do not use Homebrew for uv):
 ```bash
@@ -54,6 +74,13 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Then install Python 3.12 via uv (no separate Python installation needed):
 ```bash
 uv python install 3.12
+```
+
+**Frontend** — uses `pnpm` as package manager. Requires Node.js ≥ 18.
+
+If not yet installed, install `pnpm` via:
+```bash
+npm install -g pnpm
 ```
 
 # Quick start
@@ -79,8 +106,14 @@ Run the test suite:
 uv run pytest
 ```
 
-Launch the frontend (Stage 2):
+Install frontend dependencies and launch the frontend:
 ```bash
 cd frontend
-# TODO: npm run dev  (or equivalent once Stage 2 is implemented)
+pnpm install
+pnpm dev
+```
+
+Copy `.env.local.example` (or create `.env.local`) and set:
+```
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```

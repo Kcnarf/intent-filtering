@@ -66,7 +66,9 @@ The structured filter object is the shared contract between frontend and backend
 
 ### Frontend (Stage 2)
 
-React / Next.js SPA with Tailwind CSS. Single dashboard page: Big Numbers dataviz + filter panel. No paginated list of films — the primary view is aggregated.
+Next.js 16 SPA (App Router, TypeScript, Tailwind CSS v4, shadcn/ui). Single dashboard page: three Big Number cards (total films, avg score with mini score distribution, total votes) + a movie list sorted by descending rating + filter controls. No paginated list of films — the primary view is aggregated.
+
+Active filters are always visible as removable chips so that Stage 3 intent auto-population is immediately apparent to the user without opening any panel.
 
 **Source files**:
 ```
@@ -89,12 +91,33 @@ api/
     test_main.py      GET /health, CORS middleware
     test_routers.py   GET /api/movies, GET /api/movies/stat
   data/               gitignored
+frontend/
+  src/
+    app/
+      layout.tsx      root layout, metadata, fonts
+      page.tsx        main dashboard page — owns all state and data fetching
+      globals.css     Tailwind base styles
+    components/
+      ui/             shadcn/ui generated components (button, badge, card, …)
+      BigNumber.tsx   reusable stat card: type ('total_count'|'average_rating'|'total_votes'), value, optional children slot
+      MovieList.tsx   movie list pre-sorted by average_rating desc
+      FilterChips.tsx always-visible active filter chips with remove buttons
+      FilterPanel.tsx filter controls: genre Select, year inputs, rating Slider, votes Select
+      IntentInput.tsx Stage 3 placeholder (disabled textarea)
+    lib/
+      types.ts        TS interfaces mirroring API Pydantic schemas
+      api.ts          fetchMoviesStat(filters), fetchMovies(filters)
+      utils.ts        shadcn/ui class merging utility (cn)
+  .env.local          gitignored — NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+
+**Frontend is not tested** — see TESTING.md. Backend integration tests are the quality gate.
 
 ## Common Commands
 
 ```bash
-# Install dependencies (from ./api/)
+# ── Backend (from ./api/) ──────────────────────────────────────
+# Install dependencies
 uv sync
 
 # Build the local database (first-time setup, ~5 min)
@@ -105,6 +128,16 @@ uv run uvicorn app.main:app --reload
 
 # Run tests
 uv run pytest
+
+# ── Frontend (from ./frontend/) ───────────────────────────────
+# Install dependencies
+pnpm install
+
+# Run the dev server (http://localhost:3000)
+pnpm dev
+
+# Type-check without building
+pnpm tsc --noEmit
 ```
 
 ## Implementation Details
