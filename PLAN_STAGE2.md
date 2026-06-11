@@ -12,8 +12,8 @@
 | # | Status | Description | Files |
 |---|---|---|---|
 | 0 | `[x]` | Bootstrap: `pnpm create next-app frontend` + install shadcn/ui | CLI only |
-| 1 | `[~]` | API layer | `src/lib/types.ts`, `src/lib/api.ts` |
-| 2 | `[ ]` | BigNumber component | `src/components/BigNumber.tsx` |
+| 1 | `[x]` | API layer | `src/lib/types.ts`, `src/lib/api.ts` |
+| 2 | `[~]` | BigNumber component | `src/components/BigNumber.tsx` |
 | 3 | `[ ]` | MovieList component | `src/components/MovieList.tsx` |
 | 4 | `[ ]` | Filter components | `src/components/FilterChips.tsx`, `src/components/FilterPanel.tsx` |
 | 5 | `[ ]` | IntentInput placeholder | `src/components/IntentInput.tsx` |
