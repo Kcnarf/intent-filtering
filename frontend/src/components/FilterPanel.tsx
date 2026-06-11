@@ -74,12 +74,19 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
             type="number"
             placeholder="From"
             value={filters.year_min ?? ""}
-            onChange={(e) =>
+            max={filters.year_max}
+            onChange={(e) => {
+              const val = e.target.value ? Number(e.target.value) : undefined
               onChange({
                 ...filters,
-                year_min: e.target.value ? Number(e.target.value) : undefined,
+                year_min: val,
+                // clamp year_max up if it would fall below the new min
+                year_max:
+                  val !== undefined && filters.year_max !== undefined && filters.year_max < val
+                    ? val
+                    : filters.year_max,
               })
-            }
+            }}
             className="w-24"
           />
           <span className="text-muted-foreground">–</span>
@@ -87,12 +94,19 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
             type="number"
             placeholder="To"
             value={filters.year_max ?? ""}
-            onChange={(e) =>
+            min={filters.year_min}
+            onChange={(e) => {
+              const val = e.target.value ? Number(e.target.value) : undefined
               onChange({
                 ...filters,
-                year_max: e.target.value ? Number(e.target.value) : undefined,
+                year_max: val,
+                // clamp year_min down if it would exceed the new max
+                year_min:
+                  val !== undefined && filters.year_min !== undefined && filters.year_min > val
+                    ? val
+                    : filters.year_min,
               })
-            }
+            }}
             className="w-24"
           />
         </div>

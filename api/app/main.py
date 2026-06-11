@@ -1,7 +1,10 @@
+import json
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from .config import settings
 from .database import create_tables
@@ -29,6 +32,13 @@ app.add_middleware(
 
 app.include_router(movies_router, prefix="/api")
 app.include_router(movies_stat_router, prefix="/api")
+
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    # exc.errors() ctx values may contain non-serializable Python exceptions;
+    # use Pydantic's own JSON encoder then parse back to get a safe dict.
+    return JSONResponse(status_code=422, content={"detail": json.loads(exc.json())})
 
 
 @app.get("/health")

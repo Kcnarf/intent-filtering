@@ -87,6 +87,15 @@ class TestGetMovies:
             data = (await test_client.get("/api/movies/stat")).json()
             assert data["total_count"] == 2
 
+    class TestYearRangeConstraint:
+        async def test_should_return_422_when_year_min_exceeds_year_max(self, test_client):
+            response = await test_client.get("/api/movies", params={"year_min": 2020, "year_max": 2010})
+            assert response.status_code == 422
+
+        async def test_should_accept_equal_year_min_and_year_max(self, test_client):
+            response = await test_client.get("/api/movies", params={"year_min": 2020, "year_max": 2020})
+            assert response.status_code == 200
+
     class TestRatingMinParam:
         @pytest.fixture(autouse=True)
         async def setup_data(self, test_db_session):

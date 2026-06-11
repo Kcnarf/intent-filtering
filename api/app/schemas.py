@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class FilterParams(BaseModel):
@@ -9,6 +9,13 @@ class FilterParams(BaseModel):
     votes_min: int | None = None
     limit: int = 50
     offset: int = 0
+
+    @model_validator(mode="after")
+    def check_year_range(self) -> "FilterParams":
+        if self.year_min is not None and self.year_max is not None:
+            if self.year_min > self.year_max:
+                raise ValueError("year_min must not exceed year_max")
+        return self
 
 
 class MovieOut(BaseModel):
