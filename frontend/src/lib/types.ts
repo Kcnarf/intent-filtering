@@ -1,5 +1,7 @@
 export interface FilterParams {
   genre?: string
+  genres_or?: string[]
+  genres_and?: string[]
   year_min?: number
   year_max?: number
   rating_min?: number

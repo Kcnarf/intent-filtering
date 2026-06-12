@@ -1,7 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { ChevronsUpDownIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -29,6 +37,65 @@ const VOTES_PRESETS = [
   { label: "≥ 500K", value: "500000" },
 ]
 
+function GenreMultiSelect({
+  selected,
+  onChange,
+}: {
+  selected: string[]
+  onChange: (genres: string[]) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  const triggerLabel =
+    selected.length === 0
+      ? "All genres"
+      : selected.length <= 2
+        ? selected.join(", ")
+        : `${selected.slice(0, 2).join(", ")} +${selected.length - 2}`
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={<Button variant="outline" className="w-full justify-between font-normal" />}
+      >
+        <span className="truncate">{triggerLabel}</span>
+        <ChevronsUpDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2">
+        <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
+          {GENRES.map((g) => {
+            const checked = selected.includes(g)
+            return (
+              <label
+                key={g}
+                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
+              >
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={(v) =>
+                    onChange(v ? [...selected, g] : selected.filter((x) => x !== g))
+                  }
+                />
+                <span className="text-sm">{g}</span>
+              </label>
+            )
+          })}
+        </div>
+        {selected.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1 w-full text-xs"
+            onClick={() => onChange([])}
+          >
+            Clear
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 interface FilterPanelProps {
   filters: FilterParams
   onChange: (filters: FilterParams) => void
@@ -43,27 +110,26 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Genre */}
+      {/* Genres: any of */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Genre</label>
-        <Select
-          value={filters.genre ?? ""}
-          onValueChange={(val) =>
-            onChange({ ...filters, genre: val || undefined })
+        <label className="text-sm font-medium">Genres (any of)</label>
+        <GenreMultiSelect
+          selected={filters.genres_or ?? []}
+          onChange={(genres) =>
+            onChange({ ...filters, genres_or: genres.length ? genres : undefined })
           }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="All genres" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All genres</SelectItem>
-            {GENRES.map((g) => (
-              <SelectItem key={g} value={g}>
-                {g}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        />
+      </div>
+
+      {/* Genres: all of */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium">Genres (all of)</label>
+        <GenreMultiSelect
+          selected={filters.genres_and ?? []}
+          onChange={(genres) =>
+            onChange({ ...filters, genres_and: genres.length ? genres : undefined })
+          }
+        />
       </div>
 
       {/* Year range */}

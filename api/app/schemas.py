@@ -1,21 +1,31 @@
-from pydantic import BaseModel, ConfigDict, model_validator
+from typing import Annotated
+
+from fastapi import HTTPException, Query
+from pydantic import BaseModel, ConfigDict
 
 
-class FilterParams(BaseModel):
-    genre: str | None = None
-    year_min: int | None = None
-    year_max: int | None = None
-    rating_min: float | None = None
-    votes_min: int | None = None
-    limit: int = 50
-    offset: int = 0
-
-    @model_validator(mode="after")
-    def check_year_range(self) -> "FilterParams":
-        if self.year_min is not None and self.year_max is not None:
-            if self.year_min > self.year_max:
-                raise ValueError("year_min must not exceed year_max")
-        return self
+class FilterParams:
+    def __init__(
+        self,
+        genres_or: Annotated[list[str], Query()] = [],  # noqa: B006
+        genres_and: Annotated[list[str], Query()] = [],  # noqa: B006
+        year_min: int | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        votes_min: int | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ):
+        if year_min is not None and year_max is not None and year_min > year_max:
+            raise HTTPException(status_code=422, detail="year_min must not exceed year_max")
+        self.genres_or = genres_or
+        self.genres_and = genres_and
+        self.year_min = year_min
+        self.year_max = year_max
+        self.rating_min = rating_min
+        self.votes_min = votes_min
+        self.limit = limit
+        self.offset = offset
 
 
 class MovieOut(BaseModel):

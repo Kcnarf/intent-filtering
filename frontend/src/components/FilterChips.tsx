@@ -26,10 +26,17 @@ function formatVotes(n: number): string {
 function buildChips(filters: FilterParams): Chip[] {
   const chips: Chip[] = []
 
-  if (filters.genre) {
+  if (filters.genres_or?.length) {
     chips.push({
-      label: `Genre: ${filters.genre}`,
-      clear: { ...filters, genre: undefined },
+      label: filters.genres_or.join(" or "),
+      clear: { ...filters, genres_or: undefined },
+    })
+  }
+
+  if (filters.genres_and?.length) {
+    chips.push({
+      label: filters.genres_and.join(" + "),
+      clear: { ...filters, genres_and: undefined },
     })
   }
 

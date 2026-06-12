@@ -19,82 +19,142 @@ class TestGetMovies:
         async def test_should_return_movies(self, test_client):
             response = await test_client.get("/api/movies")
             assert response.status_code == 200
-            assert len(response.json()) > 0
+            assert len(response.json()) == 1
 
-    class TestGenreParam:
-        @pytest.fixture(autouse=True)
-        async def setup_data(self, test_db_session):
-            test_db_session.add_all([
-                Movie(id="tt0000001", primary_title="Action Movie", original_title="Action Movie",
+    class TestGenreParams:
+
+        # Shared 5-movie dataset for OR, AND, and Combined tests.
+        # tt0000005 (Action only) is the key pivot: recovered by genres_or(Action,Comedy)
+        # but NOT by genres_and(Action,Comedy), making OR vs AND contrast immediately apparent.
+        @staticmethod
+        def _make_shared_movies():
+            return [
+                Movie(id="tt0000001", primary_title="Action Comedy", original_title="Action Comedy",
+                      start_year=2000, runtime_minutes=120, genres="Action,Comedy",
+                      average_rating=7.0, num_votes=50_000),
+                Movie(id="tt0000002", primary_title="Action Drama", original_title="Action Drama",
+                      start_year=2000, runtime_minutes=120, genres="Action,Drama",
+                      average_rating=7.0, num_votes=50_000),
+                Movie(id="tt0000003", primary_title="Comedy Horror", original_title="Comedy Horror",
+                      start_year=2000, runtime_minutes=120, genres="Comedy,Horror",
+                      average_rating=7.0, num_votes=50_000),
+                Movie(id="tt0000004", primary_title="Drama Thriller", original_title="Drama Thriller",
+                      start_year=2000, runtime_minutes=120, genres="Drama,Thriller",
+                      average_rating=7.0, num_votes=50_000),
+                Movie(id="tt0000005", primary_title="Action Movie", original_title="Action Movie",
                       start_year=2000, runtime_minutes=120, genres="Action",
                       average_rating=7.0, num_votes=50_000),
-                Movie(id="tt0000002", primary_title="Drama Movie", original_title="Drama Movie",
-                      start_year=2000, runtime_minutes=120, genres="Drama",
-                      average_rating=7.0, num_votes=50_000),
-            ])
-            await test_db_session.commit()
+            ]
 
-        async def test_should_filter_to_matching_movies_when_provided(self, test_client):
-            movies = (await test_client.get("/api/movies", params={"genre": "Action", "limit": 100})).json()
-            assert len(movies) > 0
-            assert all("Action" in m["genres"] for m in movies)
+        class TestGenresOrParam:
+            @pytest.fixture(autouse=True)
+            async def setup_data(self, test_db_session):
+                test_db_session.add_all(TestGetMovies.TestGenreParams._make_shared_movies())
+                await test_db_session.commit()
 
-        async def test_should_return_all_movies_when_omitted(self, test_client):
-            data = (await test_client.get("/api/movies/stat")).json()
-            assert data["total_count"] == 2
+            async def test_should_filter_to_movies_matching_any_genre_when_multiple_provided(self, test_client):
+                movies = (await test_client.get("/api/movies",
+                    params={"genres_or": ["Action", "Comedy"], "limit": 100})).json()
+                assert len(movies) == 4
+                assert sorted(m["id"] for m in movies) == ["tt0000001", "tt0000002", "tt0000003", "tt0000005"]
 
-    class TestYearMinParam:
-        @pytest.fixture(autouse=True)
-        async def setup_data(self, test_db_session):
-            test_db_session.add_all([
-                Movie(id="tt0000001", primary_title="Old Movie", original_title="Old Movie",
-                      start_year=1995, runtime_minutes=120, genres="Drama",
-                      average_rating=7.0, num_votes=50_000),
-                Movie(id="tt0000002", primary_title="New Movie", original_title="New Movie",
-                      start_year=2005, runtime_minutes=120, genres="Drama",
-                      average_rating=7.0, num_votes=50_000),
-            ])
-            await test_db_session.commit()
+            async def test_should_filter_to_movies_of_that_genre_when_single_provided(self, test_client):
+                movies = (await test_client.get("/api/movies",
+                    params={"genres_or": ["Action"], "limit": 100})).json()
+                assert len(movies) == 3
+                assert sorted(m["id"] for m in movies) == ["tt0000001", "tt0000002", "tt0000005"]
 
-        async def test_should_filter_to_movies_from_year_onwards_when_provided(self, test_client):
-            movies = (await test_client.get("/api/movies", params={"year_min": 2000, "limit": 100})).json()
-            assert len(movies) > 0
-            assert all(m["start_year"] >= 2000 for m in movies)
+            async def test_should_return_all_movies_when_omitted(self, test_client):
+                data = (await test_client.get("/api/movies/stat")).json()
+                assert data["total_count"] == 5
 
-        async def test_should_return_all_movies_when_omitted(self, test_client):
-            data = (await test_client.get("/api/movies/stat")).json()
-            assert data["total_count"] == 2
+        class TestGenresAndParam:
+            @pytest.fixture(autouse=True)
+            async def setup_data(self, test_db_session):
+                test_db_session.add_all(TestGetMovies.TestGenreParams._make_shared_movies())
+                await test_db_session.commit()
 
-    class TestYearMaxParam:
-        @pytest.fixture(autouse=True)
-        async def setup_data(self, test_db_session):
-            test_db_session.add_all([
-                Movie(id="tt0000001", primary_title="Old Movie", original_title="Old Movie",
-                      start_year=1985, runtime_minutes=120, genres="Drama",
-                      average_rating=7.0, num_votes=50_000),
-                Movie(id="tt0000002", primary_title="New Movie", original_title="New Movie",
-                      start_year=2005, runtime_minutes=120, genres="Drama",
-                      average_rating=7.0, num_votes=50_000),
-            ])
-            await test_db_session.commit()
+            async def test_should_filter_to_movies_matching_all_genres_when_multiple_provided(self, test_client):
+                movies = (await test_client.get("/api/movies",
+                    params={"genres_and": ["Action", "Comedy"], "limit": 100})).json()
+                assert len(movies) == 1
+                assert movies[0]["id"] == "tt0000001"
 
-        async def test_should_filter_to_movies_up_to_year_when_provided(self, test_client):
-            movies = (await test_client.get("/api/movies", params={"year_max": 1990, "limit": 100})).json()
-            assert len(movies) > 0
-            assert all(m["start_year"] <= 1990 for m in movies)
+            async def test_should_filter_to_movies_of_that_genre_when_single_provided(self, test_client):
+                movies = (await test_client.get("/api/movies",
+                    params={"genres_and": ["Action"], "limit": 100})).json()
+                assert len(movies) == 3
+                assert sorted(m["id"] for m in movies) == ["tt0000001", "tt0000002", "tt0000005"]
 
-        async def test_should_return_all_movies_when_omitted(self, test_client):
-            data = (await test_client.get("/api/movies/stat")).json()
-            assert data["total_count"] == 2
+            async def test_should_return_all_movies_when_omitted(self, test_client):
+                data = (await test_client.get("/api/movies/stat")).json()
+                assert data["total_count"] == 5
 
-    class TestYearRangeConstraint:
-        async def test_should_return_422_when_year_min_exceeds_year_max(self, test_client):
-            response = await test_client.get("/api/movies", params={"year_min": 2020, "year_max": 2010})
-            assert response.status_code == 422
+        class TestGenresCombinedParam:
+            @pytest.fixture(autouse=True)
+            async def setup_data(self, test_db_session):
+                test_db_session.add_all(TestGetMovies.TestGenreParams._make_shared_movies())
+                await test_db_session.commit()
 
-        async def test_should_accept_equal_year_min_and_year_max(self, test_client):
-            response = await test_client.get("/api/movies", params={"year_min": 2020, "year_max": 2020})
-            assert response.status_code == 200
+            async def test_should_apply_both_or_and_and_filters_simultaneously(self, test_client):
+                movies = (await test_client.get("/api/movies",
+                    params={"genres_and": ["Action"], "genres_or": ["Comedy", "Drama"], "limit": 100})).json()
+                assert len(movies) == 2
+                assert sorted(m["id"] for m in movies) == ["tt0000001", "tt0000002"]
+
+    class TestYearParams:
+        class TestYearMinParam:
+            @pytest.fixture(autouse=True)
+            async def setup_data(self, test_db_session):
+                test_db_session.add_all([
+                    Movie(id="tt0000001", primary_title="Old Movie", original_title="Old Movie",
+                        start_year=1995, runtime_minutes=120, genres="Drama",
+                        average_rating=7.0, num_votes=50_000),
+                    Movie(id="tt0000002", primary_title="New Movie", original_title="New Movie",
+                        start_year=2005, runtime_minutes=120, genres="Drama",
+                        average_rating=7.0, num_votes=50_000),
+                ])
+                await test_db_session.commit()
+
+            async def test_should_filter_to_movies_from_year_onwards_when_provided(self, test_client):
+                movies = (await test_client.get("/api/movies", params={"year_min": 2000, "limit": 100})).json()
+                assert len(movies) == 1
+                assert movies[0]["id"] == "tt0000002"
+
+            async def test_should_return_all_movies_when_omitted(self, test_client):
+                data = (await test_client.get("/api/movies/stat")).json()
+                assert data["total_count"] == 2
+
+        class TestYearMaxParam:
+            @pytest.fixture(autouse=True)
+            async def setup_data(self, test_db_session):
+                test_db_session.add_all([
+                    Movie(id="tt0000001", primary_title="Old Movie", original_title="Old Movie",
+                        start_year=1985, runtime_minutes=120, genres="Drama",
+                        average_rating=7.0, num_votes=50_000),
+                    Movie(id="tt0000002", primary_title="New Movie", original_title="New Movie",
+                        start_year=2005, runtime_minutes=120, genres="Drama",
+                        average_rating=7.0, num_votes=50_000),
+                ])
+                await test_db_session.commit()
+
+            async def test_should_filter_to_movies_up_to_year_when_provided(self, test_client):
+                movies = (await test_client.get("/api/movies", params={"year_max": 1990, "limit": 100})).json()
+                assert len(movies) == 1
+                assert movies[0]["id"] == "tt0000001"
+
+            async def test_should_return_all_movies_when_omitted(self, test_client):
+                data = (await test_client.get("/api/movies/stat")).json()
+                assert data["total_count"] == 2
+
+        class TestYearRangeConstraint:
+            async def test_should_return_422_when_year_min_exceeds_year_max(self, test_client):
+                response = await test_client.get("/api/movies", params={"year_min": 2020, "year_max": 2010})
+                assert response.status_code == 422
+
+            async def test_should_accept_equal_year_min_and_year_max(self, test_client):
+                response = await test_client.get("/api/movies", params={"year_min": 2020, "year_max": 2020})
+                assert response.status_code == 200
 
     class TestRatingMinParam:
         @pytest.fixture(autouse=True)
@@ -111,8 +171,8 @@ class TestGetMovies:
 
         async def test_should_filter_to_movies_above_rating_when_provided(self, test_client):
             movies = (await test_client.get("/api/movies", params={"rating_min": 8.0, "limit": 100})).json()
-            assert len(movies) > 0
-            assert all(m["average_rating"] >= 8.0 for m in movies)
+            assert len(movies) == 1
+            assert movies[0]["id"] == "tt0000001"
 
         async def test_should_return_all_movies_when_omitted(self, test_client):
             data = (await test_client.get("/api/movies/stat")).json()
@@ -133,8 +193,8 @@ class TestGetMovies:
 
         async def test_should_filter_to_movies_above_votes_when_provided(self, test_client):
             movies = (await test_client.get("/api/movies", params={"votes_min": 100000, "limit": 100})).json()
-            assert len(movies) > 0
-            assert all(m["num_votes"] >= 100000 for m in movies)
+            assert len(movies) == 1
+            assert movies[0]["id"] == "tt0000001"
 
         async def test_should_return_all_movies_when_omitted(self, test_client):
             data = (await test_client.get("/api/movies/stat")).json()
