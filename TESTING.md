@@ -39,6 +39,53 @@ Every test description must start with "should" to clearly state expected behavi
 
 **Why:** Creates consistent, behavior-focused documentation; makes expected behavior immediately clear.
 
+## Subset Operation Assertions
+
+When testing any operation that returns a subset of items — filtering, paginating, querying by relationship, batch side-effects, permission checks, etc. — assert the **exact result set**, not just properties of the returned items.
+
+**Recommended pattern — count first, then set:**
+
+```python
+# ✅ count assertion: fast break with a readable mismatch message
+assert len(results) == 2
+# ✅ set assertion: catches wrong items even when count is right
+assert {m["id"] for m in results} == {"id_1", "id_2"}
+
+# ❌ attribute check — only verifies returned items look right;
+#    a broken operation returning too many (or zero) items can still pass
+assert all(criterion(m) for m in results)
+```
+
+The `len()` assertion fails immediately with a clear count mismatch ("expected 2, got 5") before the set comparison even runs. The set comparison then catches wrong-item cases where the count is accidentally correct. Together they are unambiguous.
+
+Attribute-presence checks only verify that returned results satisfy the criterion. They do not catch a broken operation that returns extra items (if those extra items also satisfy the criterion) or returns nothing at all (vacuously true for an empty list).
+
+**When no unique identifier is available**, the count assertion becomes the primary guard; follow it with the most stable distinguishing field (name, title, slug, composite key):
+```python
+assert len(results) == 2
+assert {r["name"] for r in results} == {"Alice", "Bob"}
+```
+
+**If ordering also matters**, add a separate assertion for it — do not use a sorted list comparison as a substitute for set equality:
+```python
+assert {m["id"] for m in results} == {"id_1", "id_2"}  # correct items
+assert [m["id"] for m in results] == ["id_1", "id_2"]  # correct order
+```
+
+**Why:** Set comparison simultaneously verifies inclusion (expected items were returned) and exclusion (unexpected items were not). Per-item attribute checks verify only one direction — a subtle false positive that is easy to miss.
+
+### Companion rule: test data must include excluded items
+
+A subset operation test is only meaningful if the test dataset contains **at least one item that should NOT appear in the result**. Without an excluded item, a completely broken operation that returns everything still passes all assertions.
+
+```python
+# ❌ bad — every item satisfies genres_or=["Action"], so a broken filter passes
+Movie(genres="Action"), Movie(genres="Action,Comedy")
+
+# ✅ good — Drama must be excluded, so a broken filter is caught
+Movie(genres="Action"), Movie(genres="Action,Comedy"), Movie(genres="Drama")
+```
+
 ## Unit Tests
 
 ### Unit Tests: Code Responsibility
