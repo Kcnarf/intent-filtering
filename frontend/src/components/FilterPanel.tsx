@@ -9,14 +9,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
+import { cn } from "@/lib/utils"
 import type { FilterParams } from "@/lib/types"
 
 const GENRES = [
@@ -29,15 +23,54 @@ const GENRES = [
 const YEAR_MIN = 1900
 const YEAR_MAX = 2025
 
-const VOTES_PRESETS = [
-  { label: "Any", value: "" },
-  { label: "≥ 1K", value: "1000" },
-  { label: "≥ 5K", value: "5000" },
-  { label: "≥ 10K", value: "10000" },
-  { label: "≥ 50K", value: "50000" },
-  { label: "≥ 100K", value: "100000" },
-  { label: "≥ 500K", value: "500000" },
+const VOTES_STOPS: { label: string; value: number | undefined }[] = [
+  { label: "Any", value: undefined },
+  { label: "1K",   value: 1_000 },
+  { label: "5K",   value: 5_000 },
+  { label: "10K",  value: 10_000 },
+  { label: "50K",  value: 50_000 },
+  { label: "100K", value: 100_000 },
+  { label: "500K", value: 500_000 },
 ]
+const VOTES_MAX_IDX = VOTES_STOPS.length - 1  // 6
+const VOTES_SNAP_ZONE = 0.25
+
+// Map a slider position (0–VOTES_MAX_IDX) to a votes threshold.
+// Positions < 0.5 map to "Any"; integer positions map to exact presets;
+// fractional positions between presets use log interpolation.
+function posToVotes(pos: number): number | undefined {
+  if (pos < 0.5) return undefined
+  const lo = Math.max(1, Math.floor(pos))
+  const hi = Math.min(Math.ceil(pos), VOTES_MAX_IDX)
+  if (lo === hi) return VOTES_STOPS[lo].value
+  const t = pos - Math.floor(pos)
+  return Math.round(
+    Math.pow(10, Math.log10(VOTES_STOPS[lo].value!) * (1 - t) + Math.log10(VOTES_STOPS[hi].value!) * t)
+  )
+}
+
+// Map a votes threshold back to a slider position.
+function votesToPos(votes: number | undefined): number {
+  if (!votes) return 0
+  const idx = VOTES_STOPS.findIndex((s) => s.value === votes)
+  if (idx >= 0) return idx
+  for (let i = 1; i < VOTES_MAX_IDX; i++) {
+    const lo = VOTES_STOPS[i].value!
+    const hi = VOTES_STOPS[i + 1].value!
+    if (votes > lo && votes < hi) {
+      const t = (Math.log10(votes) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))
+      return i + t
+    }
+  }
+  return VOTES_MAX_IDX
+}
+
+function formatVotesLabel(votes: number | undefined): string {
+  if (!votes) return "Any"
+  if (votes >= 1_000_000) return `≥ ${(votes / 1_000_000).toFixed(1)}M`
+  if (votes >= 1_000) return `≥ ${Math.round(votes / 1_000)}K`
+  return `≥ ${votes}`
+}
 
 function GenreMultiSelect({
   selected,
@@ -116,6 +149,10 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
     filters.year_max ?? YEAR_MAX,
   ]
 
+  const [dragVotesPos, setDragVotesPos] = useState<number | null>(null)
+  const displayVotesPos = dragVotesPos ?? votesToPos(filters.votes_min)
+  const displayVotes = posToVotes(displayVotesPos)
+
   return (
     <div className="flex flex-col gap-5">
       {/* Genres: any of */}
@@ -192,25 +229,66 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
       </div>
 
       {/* Votes min */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Min votes</label>
-        <Select
-          value={filters.votes_min != null ? String(filters.votes_min) : ""}
-          onValueChange={(val) =>
-            onChange({ ...filters, votes_min: val ? Number(val) : undefined })
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any" />
-          </SelectTrigger>
-          <SelectContent>
-            {VOTES_PRESETS.map((p) => (
-              <SelectItem key={p.label} value={p.value}>
-                {p.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between">
+          <label className="text-sm font-medium">Min votes</label>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {formatVotesLabel(displayVotes)}
+          </span>
+        </div>
+        <div className="relative">
+          <Slider
+            min={0}
+            max={VOTES_MAX_IDX}
+            step={0.01}
+            value={[displayVotesPos]}
+            onValueChange={(vals) => {
+              const pos = typeof vals === "number" ? vals : vals[0]
+              setDragVotesPos(pos)
+            }}
+            onValueCommitted={(vals) => {
+              const pos = typeof vals === "number" ? vals : vals[0]
+              const rounded = Math.round(pos)
+              const snapped = Math.abs(pos - rounded) <= VOTES_SNAP_ZONE ? rounded : pos
+              setDragVotesPos(null)
+              onChange({ ...filters, votes_min: posToVotes(snapped) })
+            }}
+          />
+          <div className="mx-[6px]">
+            <div className="relative mt-1 h-1.5">
+              {VOTES_STOPS.map((stop, i) => (
+                <span
+                  key={stop.label}
+                  className={cn(
+                    "absolute h-full w-px bg-muted-foreground/50",
+                    i === 0 ? "" : i === VOTES_MAX_IDX ? "-translate-x-full" : "-translate-x-1/2"
+                  )}
+                  style={{ left: `${(i / VOTES_MAX_IDX) * 100}%` }}
+                />
+              ))}
+            </div>
+            <div className="relative h-4">
+              {VOTES_STOPS.map((stop, i) => (
+                <span
+                  key={stop.label}
+                  className={cn(
+                    "absolute text-xs text-muted-foreground",
+                    i > 0 && i < VOTES_MAX_IDX && "-translate-x-1/2"
+                  )}
+                  style={
+                    i === 0
+                      ? { left: "-6px" }
+                      : i === VOTES_MAX_IDX
+                        ? { right: "-6px" }
+                        : { left: `${(i / VOTES_MAX_IDX) * 100}%` }
+                  }
+                >
+                  {stop.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
