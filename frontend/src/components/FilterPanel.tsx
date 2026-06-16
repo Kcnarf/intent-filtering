@@ -4,7 +4,6 @@ import { useState } from "react"
 import { ChevronsUpDownIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
 import {
   Popover,
   PopoverContent,
@@ -26,6 +25,9 @@ const GENRES = [
   "Horror", "Music", "Musical", "Mystery", "Romance", "Sci-Fi",
   "Sport", "Thriller", "War", "Western",
 ]
+
+const YEAR_MIN = 1900
+const YEAR_MAX = 2025
 
 const VOTES_PRESETS = [
   { label: "Any", value: "" },
@@ -108,6 +110,12 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
   const [dragRating, setDragRating] = useState<number | null>(null)
   const displayRating = dragRating ?? filters.rating_min ?? 1
 
+  const [dragYear, setDragYear] = useState<[number, number] | null>(null)
+  const displayYear: [number, number] = dragYear ?? [
+    filters.year_min ?? YEAR_MIN,
+    filters.year_max ?? YEAR_MAX,
+  ]
+
   return (
     <div className="flex flex-col gap-5">
       {/* Genres: any of */}
@@ -133,49 +141,29 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
       </div>
 
       {/* Year range */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Year range</label>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            placeholder="From"
-            value={filters.year_min ?? ""}
-            max={filters.year_max}
-            onChange={(e) => {
-              const val = e.target.value ? Number(e.target.value) : undefined
-              onChange({
-                ...filters,
-                year_min: val,
-                // clamp year_max up if it would fall below the new min
-                year_max:
-                  val !== undefined && filters.year_max !== undefined && filters.year_max < val
-                    ? val
-                    : filters.year_max,
-              })
-            }}
-            className="w-24"
-          />
-          <span className="text-muted-foreground">–</span>
-          <Input
-            type="number"
-            placeholder="To"
-            value={filters.year_max ?? ""}
-            min={filters.year_min}
-            onChange={(e) => {
-              const val = e.target.value ? Number(e.target.value) : undefined
-              onChange({
-                ...filters,
-                year_max: val,
-                // clamp year_min down if it would exceed the new max
-                year_min:
-                  val !== undefined && filters.year_min !== undefined && filters.year_min > val
-                    ? val
-                    : filters.year_min,
-              })
-            }}
-            className="w-24"
-          />
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between">
+          <label className="text-sm font-medium">Year range</label>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {displayYear[0]} – {displayYear[1]}
+          </span>
         </div>
+        <Slider
+          min={YEAR_MIN}
+          max={YEAR_MAX}
+          step={1}
+          value={displayYear}
+          onValueChange={(vals) => setDragYear(vals as [number, number])}
+          onValueCommitted={(vals) => {
+            const [lo, hi] = vals as [number, number]
+            setDragYear(null)
+            onChange({
+              ...filters,
+              year_min: lo > YEAR_MIN ? lo : undefined,
+              year_max: hi < YEAR_MAX ? hi : undefined,
+            })
+          }}
+        />
       </div>
 
       {/* Rating min */}
