@@ -15,10 +15,14 @@ When starting a new session, or when the user asks to implement a new feature or
 - If the user chooses "Standard", proceed normally with the domain rules defined in this file.
 - If the user chooses "Strict", use the following human-agent interaction directives :
   - **use the agentic ReAct (Reason->Act) workflow** :
-    1. reason/plan
-    2. wait for human approval of the plan
-    3. transform the plan into a TODO list
-    4. act by implementing the tasks of the TODO list
+    1. reason, in a collaborative way with the human; the goal is to align both the human and the AI agent on the objective; some key decisions may be made (eg. design, architecture, uesd libraries, etc.)
+    2. wait for human approval of the objectives and decisions
+    3. once the objective is well defined and decisions made, describe in natural language **what** changes are needed at a system/feature level (e.g. "update the backend endpoint to accept an array", "update the frontend fetch call"); no file names, function names, or test cases — those belong in the plan (step 5)
+    4. wait for human approval of the path
+    5. based on the approved path, plan the updates
+    6. wait for human approval of the plan
+    7. transform the plan into a TODO list
+    8. act by implementing the tasks of the TODO list
     note: of course, developments and brainstorming with the human may impact the TODO list; in such a case, inform the human and ask for its approval
   - **clear separation of coding and testing tasks**: imperatively maintain strict separation between code and test changes, with Human-in-the-Loop (HITL) checkpoints. Two acceptable orderings:
     - **TDD (preferred)**: Update tests → wait for human approval → write implementation → wait for human approval → run tests (they should pass)
