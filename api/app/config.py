@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./data/imdb.db"
     cors_origins: list[str] = ["http://localhost:3000"]
     llm_api_key: str = ""
+    intent_daily_cap: int = 100
 
 
 settings = Settings()

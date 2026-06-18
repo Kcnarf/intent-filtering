@@ -4,6 +4,20 @@ from fastapi import HTTPException, Query
 from pydantic import BaseModel, ConfigDict
 
 
+class FilterParamsBody(BaseModel):
+    genres_or: list[str] = []
+    genres_and: list[str] = []
+    year_min: int | None = None
+    year_max: int | None = None
+    rating_min: float | None = None
+    votes_min: int | None = None
+
+
+class IntentOut(BaseModel):
+    filters: FilterParamsBody
+    message: str | None = None
+
+
 class FilterParams:
     def __init__(
         self,

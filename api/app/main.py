@@ -5,12 +5,16 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from .config import settings
 from .database import create_tables
 from . import models  # noqa: F401 — registers ORM models with Base.metadata
 from .routers.movies import router as movies_router
 from .routers.movies_stat import router as movies_stat_router
+from .routers.intent import router as intent_router, limiter
 
 
 @asynccontextmanager
@@ -21,6 +25,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="intent-filtering API", lifespan=lifespan)
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -32,6 +39,7 @@ app.add_middleware(
 
 app.include_router(movies_router, prefix="/api")
 app.include_router(movies_stat_router, prefix="/api")
+app.include_router(intent_router, prefix="/api")
 
 
 @app.exception_handler(ValidationError)
