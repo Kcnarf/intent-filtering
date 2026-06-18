@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/popover"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
-import type { FilterParams } from "@/lib/types"
+import type { FilterParamsBody } from "@/lib/types"
 
 const GENRES = [
   "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime",
@@ -132,11 +132,12 @@ function GenreMultiSelect({
 }
 
 interface FilterPanelProps {
-  filters: FilterParams
-  onChange: (filters: FilterParams) => void
+  filters: FilterParamsBody
+  onPendingChange: (filters: FilterParamsBody) => void
+  onApply: () => void
 }
 
-export function FilterPanel({ filters, onChange }: FilterPanelProps) {
+export function FilterPanel({ filters, onPendingChange, onApply }: FilterPanelProps) {
   // null = idle (slider reads from props); non-null = user is dragging (local visual feedback).
   // This avoids useEffect-based sync: when props change externally (e.g. Stage 3 intent update
   // or Clear all), dragRating is null so the slider immediately reflects the new prop value.
@@ -161,7 +162,7 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
         <GenreMultiSelect
           selected={filters.genres_or ?? []}
           onChange={(genres) =>
-            onChange({ ...filters, genres_or: genres.length ? genres : undefined })
+            onPendingChange({ ...filters, genres_or: genres.length ? genres : undefined })
           }
         />
       </div>
@@ -172,7 +173,7 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
         <GenreMultiSelect
           selected={filters.genres_and ?? []}
           onChange={(genres) =>
-            onChange({ ...filters, genres_and: genres.length ? genres : undefined })
+            onPendingChange({ ...filters, genres_and: genres.length ? genres : undefined })
           }
         />
       </div>
@@ -194,7 +195,7 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
           onValueCommitted={(vals) => {
             const [lo, hi] = vals as [number, number]
             setDragYear(null)
-            onChange({
+            onPendingChange({
               ...filters,
               year_min: lo > YEAR_MIN ? lo : undefined,
               year_max: hi < YEAR_MAX ? hi : undefined,
@@ -223,7 +224,7 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
           onValueCommitted={(vals) => {
             const val = typeof vals === "number" ? vals : vals[0]
             setDragRating(null)
-            onChange({ ...filters, rating_min: val > 1 ? val : undefined })
+            onPendingChange({ ...filters, rating_min: val > 1 ? val : undefined })
           }}
         />
       </div>
@@ -251,7 +252,7 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
               const rounded = Math.round(pos)
               const snapped = Math.abs(pos - rounded) <= VOTES_SNAP_ZONE ? rounded : pos
               setDragVotesPos(null)
-              onChange({ ...filters, votes_min: posToVotes(snapped) })
+              onPendingChange({ ...filters, votes_min: posToVotes(snapped) })
             }}
           />
           <div className="mx-[6px]">
@@ -290,6 +291,8 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
           </div>
         </div>
       </div>
+
+      <Button variant="default" onClick={onApply}>Apply</Button>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { fetchMovies, fetchMoviesStat } from "@/lib/api"
-import type { FilterParams, MovieOut, MoviesStatOut, RatingBucketOut } from "@/lib/types"
+import type { FilterParams, FilterParamsBody, MovieOut, MoviesStatOut, RatingBucketOut } from "@/lib/types"
 import { BigNumber } from "@/components/BigNumber"
 import { FilterChips } from "@/components/FilterChips"
 import { FilterPanel } from "@/components/FilterPanel"
@@ -34,14 +34,15 @@ function MiniScoreBars({ data }: { data: MoviesStatOut }) {
 }
 
 export default function Home() {
-  const [filters, setFilters] = useState<FilterParams>({})
+  const [activeFilters, setActiveFilters] = useState<FilterParams>({})
+  const [pendingFilters, setPendingFilters] = useState<FilterParamsBody>({})
   const [stat, setStat] = useState<MoviesStatOut | null>(null)
   const [movies, setMovies] = useState<MovieOut[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([fetchMoviesStat(filters), fetchMovies(filters)])
+    Promise.all([fetchMoviesStat(activeFilters), fetchMovies(activeFilters)])
       .then(([s, m]) => {
         setStat(s)
         setMovies(
@@ -49,7 +50,17 @@ export default function Home() {
         )
       })
       .finally(() => setLoading(false))
-  }, [filters])
+  }, [activeFilters])
+
+  function handleApply() {
+    setActiveFilters({ ...pendingFilters })
+  }
+
+  function handleChipRemove(updated: FilterParams) {
+    const { limit: _l, offset: _o, ...pendingUpdate } = updated
+    setActiveFilters(updated)
+    setPendingFilters(pendingUpdate)
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -60,18 +71,24 @@ export default function Home() {
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Sidebar — desktop only */}
         <aside className="hidden w-72 shrink-0 flex-col gap-6 border-r p-6 lg:flex">
-          <IntentInput />
-          <FilterPanel filters={filters} onChange={setFilters} />
+          <IntentInput pendingFilters={pendingFilters} onPendingChange={setPendingFilters} />
+          <FilterPanel filters={pendingFilters} onPendingChange={setPendingFilters} onApply={handleApply} />
         </aside>
 
         <main className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
           {/* IntentInput — mobile only */}
           <div className="lg:hidden">
-            <IntentInput />
+            <IntentInput pendingFilters={pendingFilters} onPendingChange={setPendingFilters} />
           </div>
 
           {/* Active filter chips (always visible; Sheet trigger hidden on lg+) */}
-          <FilterChips filters={filters} onChange={setFilters} />
+          <FilterChips
+            filters={activeFilters}
+            onChange={handleChipRemove}
+            pendingFilters={pendingFilters}
+            onPendingChange={setPendingFilters}
+            onApply={handleApply}
+          />
 
           {/* Big Numbers */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

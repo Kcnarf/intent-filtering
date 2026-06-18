@@ -64,28 +64,28 @@
 
 ### Frontend
 
-- [ ] **F1** — Add intent types to `frontend/src/lib/types.ts`
+- [x] **F1** — Add intent types to `frontend/src/lib/types.ts`
   - `FilterParamsBody`: same fields as `FilterParams` without `limit`/`offset`
   - ~~`IntentRequest`~~ — not needed (GET endpoint, query params)
   - `IntentOut`: `{ filters: FilterParamsBody; message?: string }`
-- [ ] **F2** — Add `fetchIntent` to `frontend/src/lib/api.ts`
+- [x] **F2** — Add `fetchIntent` to `frontend/src/lib/api.ts`
   - `fetchIntent(intentText: string, currentFilters: FilterParamsBody): Promise<IntentOut>`
   - GET with query string: appends `intent_text` + all `FilterParamsBody` fields (reuses `toQueryString` pattern)
-- [ ] **F3** — Update `frontend/src/components/FilterPanel.tsx`
+- [x] **F3** — Update `frontend/src/components/FilterPanel.tsx`
   - Rename `onChange` prop → `onPendingChange` (same signature)
   - Add `onApply: () => void` prop
   - Add Apply button (shadcn/ui `Button`, variant `"default"`) at bottom of panel
-- [ ] **F4** — Update `frontend/src/components/FilterChips.tsx`
+- [x] **F4** — Update `frontend/src/components/FilterChips.tsx`
   - Add props: `pendingFilters: FilterParamsBody`, `onPendingChange`, `onApply`
   - Pass them to the embedded mobile `FilterPanel`
   - Chip removal: update both `activeFilters` (via `onChange`) AND `pendingFilters` (via `onPendingChange`)
-- [ ] **F5** — Implement `frontend/src/components/IntentInput.tsx`
+- [x] **F5** — Implement `frontend/src/components/IntentInput.tsx`
   - Props: `pendingFilters: FilterParamsBody`, `onPendingChange: (f: FilterParamsBody) => void`
   - Local state: `text`, `loading`, `message`
   - Submit: call `fetchIntent` → `onPendingChange(response.filters)` + set message
   - UI: enabled textarea, Submit button (disabled while loading), message line below
   - Message clears when user starts typing
-- [ ] **F6** — Refactor `frontend/src/app/page.tsx`
+- [x] **F6** — Refactor `frontend/src/app/page.tsx`
   - Split `filters` → `activeFilters: FilterParams` + `pendingFilters: FilterParamsBody` (both init `{}`)
   - `useEffect` depends on `[activeFilters]` only
   - `handleApply`: `setActiveFilters({ ...pendingFilters })`
@@ -93,7 +93,7 @@
   - Wire `FilterPanel`: `filters={pendingFilters}` + `onPendingChange={setPendingFilters}` + `onApply={handleApply}`
   - Wire `FilterChips`: `filters={activeFilters}` + `onChange={handleChipRemove}` + pending props
   - Wire `IntentInput`: `pendingFilters={pendingFilters}` + `onPendingChange={setPendingFilters}`
-- [ ] **Type-check** — `cd frontend && pnpm tsc --noEmit` (no errors)
+- [x] **Type-check** — `cd frontend && pnpm tsc --noEmit` (no errors)
 
 ## Execution order
 

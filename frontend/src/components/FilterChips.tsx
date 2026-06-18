@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import type { FilterParams } from "@/lib/types"
+import type { FilterParams, FilterParamsBody } from "@/lib/types"
 import { FilterPanel } from "./FilterPanel"
 
 interface Chip {
@@ -73,9 +73,12 @@ function buildChips(filters: FilterParams): Chip[] {
 interface FilterChipsProps {
   filters: FilterParams
   onChange: (filters: FilterParams) => void
+  pendingFilters: FilterParamsBody
+  onPendingChange: (filters: FilterParamsBody) => void
+  onApply: () => void
 }
 
-export function FilterChips({ filters, onChange }: FilterChipsProps) {
+export function FilterChips({ filters, onChange, pendingFilters, onPendingChange, onApply }: FilterChipsProps) {
   const chips = buildChips(filters)
 
   return (
@@ -102,7 +105,7 @@ export function FilterChips({ filters, onChange }: FilterChipsProps) {
           variant="ghost"
           size="sm"
           className="h-6 px-2 text-xs"
-          onClick={() => onChange({})}
+          onClick={() => { onChange({}); onPendingChange({}) }}
         >
           Clear all
         </Button>
@@ -127,7 +130,7 @@ export function FilterChips({ filters, onChange }: FilterChipsProps) {
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
           <div className="p-4 pt-2">
-            <FilterPanel filters={filters} onChange={onChange} />
+            <FilterPanel filters={pendingFilters} onPendingChange={onPendingChange} onApply={onApply} />
           </div>
         </SheetContent>
       </Sheet>
