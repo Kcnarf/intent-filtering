@@ -17,57 +17,72 @@ interface Chip {
   clear: FilterParams
 }
 
+interface GridSlot {
+  key: string
+  defaultLabel: string
+  activeChip: Chip | null
+  pendingChip: Chip | null
+}
+
 function formatVotes(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`
   return String(n)
 }
 
-function buildChips(filters: FilterParams): Chip[] {
-  const chips: Chip[] = []
+function yearLabel(f: FilterParams): string {
+  if (f.year_min && f.year_max) return `${f.year_min}–${f.year_max}`
+  if (f.year_min) return `From ${f.year_min}`
+  if (f.year_max) return `Until ${f.year_max}`
+  return ""
+}
 
-  if (filters.genres_or?.length) {
-    chips.push({
-      label: filters.genres_or.join(" or "),
-      clear: { ...filters, genres_or: undefined },
-    })
-  }
 
-  if (filters.genres_and?.length) {
-    chips.push({
-      label: filters.genres_and.join(" + "),
-      clear: { ...filters, genres_and: undefined },
-    })
-  }
+function buildGridSlots(active: FilterParams, pending: FilterParamsBody): GridSlot[] {
+  const p = pending as FilterParams
+  const slots: GridSlot[] = []
 
-  if (filters.year_min || filters.year_max) {
-    const label =
-      filters.year_min && filters.year_max
-        ? `${filters.year_min}–${filters.year_max}`
-        : filters.year_min
-          ? `From ${filters.year_min}`
-          : `Until ${filters.year_max}`
-    chips.push({
-      label,
-      clear: { ...filters, year_min: undefined, year_max: undefined },
-    })
-  }
+  const aOr = active.genres_or?.length ? active.genres_or : null
+  const pOr = p.genres_or?.length ? p.genres_or : null
+  if (aOr || pOr) slots.push({
+    key: "genres_or", defaultLabel: "All genres",
+    activeChip:  aOr ? { label: aOr.join(" or "),  clear: { ...active, genres_or: undefined } } : null,
+    pendingChip: pOr ? { label: pOr.join(" or "),  clear: { ...p,      genres_or: undefined } } : null,
+  })
 
-  if (filters.rating_min) {
-    chips.push({
-      label: `Rating ≥ ${filters.rating_min.toFixed(1)}`,
-      clear: { ...filters, rating_min: undefined },
-    })
-  }
+  const aAnd = active.genres_and?.length ? active.genres_and : null
+  const pAnd = p.genres_and?.length ? p.genres_and : null
+  if (aAnd || pAnd) slots.push({
+    key: "genres_and", defaultLabel: "All genres",
+    activeChip:  aAnd ? { label: aAnd.join(" + "), clear: { ...active, genres_and: undefined } } : null,
+    pendingChip: pAnd ? { label: pAnd.join(" + "), clear: { ...p,      genres_and: undefined } } : null,
+  })
 
-  if (filters.votes_min) {
-    chips.push({
-      label: `Votes ≥ ${formatVotes(filters.votes_min)}`,
-      clear: { ...filters, votes_min: undefined },
-    })
-  }
+  const aYear = active.year_min || active.year_max
+  const pYear = p.year_min || p.year_max
+  if (aYear || pYear) slots.push({
+    key: "year", defaultLabel: "Any year",
+    activeChip:  aYear ? { label: yearLabel(active), clear: { ...active, year_min: undefined, year_max: undefined } } : null,
+    pendingChip: pYear ? { label: yearLabel(p),      clear: { ...p,      year_min: undefined, year_max: undefined } } : null,
+  })
 
-  return chips
+  const aRating = active.rating_min ?? null
+  const pRating = p.rating_min ?? null
+  if (aRating || pRating) slots.push({
+    key: "rating_min", defaultLabel: "Any rating",
+    activeChip:  aRating ? { label: `Rating ≥ ${aRating.toFixed(1)}`, clear: { ...active, rating_min: undefined } } : null,
+    pendingChip: pRating ? { label: `Rating ≥ ${pRating.toFixed(1)}`, clear: { ...p,      rating_min: undefined } } : null,
+  })
+
+  const aVotes = active.votes_min ?? null
+  const pVotes = p.votes_min ?? null
+  if (aVotes || pVotes) slots.push({
+    key: "votes_min", defaultLabel: "Any votes",
+    activeChip:  aVotes ? { label: `Votes ≥ ${formatVotes(aVotes)}`, clear: { ...active, votes_min: undefined } } : null,
+    pendingChip: pVotes ? { label: `Votes ≥ ${formatVotes(pVotes)}`, clear: { ...p,      votes_min: undefined } } : null,
+  })
+
+  return slots
 }
 
 interface FilterChipsProps {
@@ -81,93 +96,118 @@ interface FilterChipsProps {
 }
 
 export function FilterChips({ filters, onChange, pendingFilters, onPendingChange, onApply, onDiscard, hasPendingChanges }: FilterChipsProps) {
-  const chips = buildChips(filters)
-  const pendingChips = buildChips(pendingFilters as FilterParams)
+  const slots = buildGridSlots(filters, pendingFilters)
+  const hasActiveFilters  = slots.some((s) => s.activeChip  !== null)
+  const hasPendingFilters = slots.some((s) => s.pendingChip !== null)
+
+  const filtersSheet = (
+    <Sheet>
+      <SheetTrigger render={<Button variant="outline" size="sm" className="h-7 gap-1.5" />}>
+        <SlidersHorizontalIcon className="size-3.5" />
+        Filters
+      </SheetTrigger>
+      <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+        <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
+        <div className="p-4 pt-2">
+          <FilterPanel filters={pendingFilters} onPendingChange={onPendingChange} />
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Pending chips row — shown above active when there are unsaved changes */}
-      {hasPendingChanges && (
+
+      {/* ── Mobile layout (< lg) ─────────────────────────────── */}
+      <div className="flex flex-col gap-2 lg:hidden">
+        {hasPendingChanges && (
+          <div className="flex flex-wrap items-center gap-2">
+            {!hasPendingFilters && (
+              <span className="text-xs italic text-muted-foreground">No filters</span>
+            )}
+            {slots.map((slot) => slot.pendingChip && (
+              <span key={`p-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                {slot.pendingChip.label}
+                <button type="button" onClick={() => onPendingChange(slot.pendingChip!.clear as FilterParamsBody)} className="rounded-full p-0.5 hover:bg-primary/20" aria-label={`Remove pending ${slot.pendingChip.label} filter`}>
+                  <XIcon className="size-3" />
+                </button>
+              </span>
+            ))}
+            <div className="ml-auto flex items-center gap-2">
+              <Button size="sm" className="h-6 px-2 text-xs" onClick={onApply}>Apply filters</Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscard}>Discard</Button>
+              {filtersSheet}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-2">
-          {pendingChips.map((chip) => (
-            <span
-              key={chip.label}
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
-            >
-              {chip.label}
-              <button
-                type="button"
-                onClick={() => onPendingChange(chip.clear as FilterParamsBody)}
-                className="rounded-full p-0.5 hover:bg-primary/20"
-                aria-label={`Remove pending ${chip.label} filter`}
-              >
+          {slots.map((slot) => slot.activeChip && (
+            <span key={`a-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+              {slot.activeChip.label}
+              <button type="button" onClick={() => onChange(slot.activeChip!.clear)} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={`Remove ${slot.activeChip.label} filter`}>
                 <XIcon className="size-3" />
               </button>
             </span>
           ))}
-          <Button size="sm" className="h-6 px-2 text-xs" onClick={onApply}>
-            Apply filters
-          </Button>
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscard}>
-            Discard
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onPendingChange({})}>Clear all</Button>
+            )}
+            {!hasPendingChanges && filtersSheet}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Desktop grid layout (≥ lg) ───────────────────────── */}
+      {slots.length > 0 && (
+        <div
+          className="hidden lg:grid lg:items-center lg:gap-x-3 lg:gap-y-1.5"
+          style={{ gridTemplateColumns: `repeat(${slots.length}, auto) 1fr` }}
+        >
+          {/* Pending row */}
+          {hasPendingChanges && (
+            <>
+              {slots.map((slot) =>
+                slot.pendingChip ? (
+                  <span key={`p-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                    {slot.pendingChip.label}
+                    <button type="button" onClick={() => onPendingChange(slot.pendingChip!.clear as FilterParamsBody)} className="rounded-full p-0.5 hover:bg-primary/20" aria-label={`Remove pending ${slot.pendingChip.label} filter`}>
+                      <XIcon className="size-3" />
+                    </button>
+                  </span>
+                ) : (
+                  <span key={`p-${slot.key}`} className="text-xs italic text-muted-foreground">{slot.defaultLabel}</span>
+                )
+              )}
+              <div className="flex justify-end gap-2">
+                <Button size="sm" className="h-6 px-2 text-xs" onClick={onApply}>Apply filters</Button>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscard}>Discard</Button>
+              </div>
+            </>
+          )}
+
+          {/* Active row */}
+          {slots.map((slot) =>
+            slot.activeChip ? (
+              <span key={`a-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                {slot.activeChip.label}
+                <button type="button" onClick={() => onChange(slot.activeChip!.clear)} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={`Remove ${slot.activeChip.label} filter`}>
+                  <XIcon className="size-3" />
+                </button>
+              </span>
+            ) : (
+              <span key={`a-${slot.key}`} className="text-xs italic text-muted-foreground">{slot.defaultLabel}</span>
+            )
+          )}
+          <div className="flex justify-end gap-2">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onPendingChange({})}>Clear all</Button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Active chips row */}
-      <div className="flex flex-wrap items-center gap-2">
-        {chips.map((chip) => (
-          <span
-            key={chip.label}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
-          >
-            {chip.label}
-            <button
-              type="button"
-              onClick={() => onChange(chip.clear)}
-              className="rounded-full p-0.5 hover:bg-foreground/10"
-              aria-label={`Remove ${chip.label} filter`}
-            >
-              <XIcon className="size-3" />
-            </button>
-          </span>
-        ))}
-
-        {chips.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-xs"
-            onClick={() => onPendingChange({})}
-          >
-            Clear all
-          </Button>
-        )}
-
-        {/* Mobile-only: opens FilterPanel in a bottom sheet */}
-        <Sheet>
-          <SheetTrigger
-            render={
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-auto h-7 gap-1.5 lg:hidden"
-              />
-            }
-          >
-            <SlidersHorizontalIcon className="size-3.5" />
-            Filters
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
-            </SheetHeader>
-            <div className="p-4 pt-2">
-              <FilterPanel filters={pendingFilters} onPendingChange={onPendingChange} />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
     </div>
   )
 }
