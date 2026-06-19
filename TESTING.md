@@ -126,14 +126,21 @@ For error conditions, test both the failure case AND the success boundary case.
 
 ## Integration Tests
 
-TODO : section defined collaboratively during Stage 1 (backend development), based on the actual API endpoints and test strategy.
+Integration tests hit the real FastAPI app via an async test client. Each test exercises a full request/response cycle against an in-memory SQLite database seeded per test class.
+
+Test files mirror the endpoint they cover (`test_routers.py` → `/api/movies` and `/api/movies/stat`, `test_intent.py` → `/api/intent`). The LLM call in the intent router is mocked via `unittest.mock.patch` so tests are deterministic and free.
 
 ## Project's Test Stack
 
 ### Backend
 
-TODO: which framework
-Backend test files live in the `./api/test/` directory.
+**Framework:** pytest + pytest-asyncio + httpx (`AsyncClient`)
+
+Test files live in `./api/tests/`:
+- `conftest.py` — shared async client fixture
+- `test_main.py` — `GET /health`, CORS middleware
+- `test_routers.py` — `GET /api/movies`, `GET /api/movies/stat`
+- `test_intent.py` — `GET /api/intent` (happy path, ambiguity, daily cap)
 
 ### Frontend
 
@@ -150,5 +157,6 @@ This project currently focuses on **integration test of the backend API**, in or
 ## Running Tests
 
 ```bash
-TODO: command to run tests
+cd api
+uv run pytest
 ```

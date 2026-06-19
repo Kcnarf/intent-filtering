@@ -14,7 +14,7 @@ This project follows 5 stages :
   **STAGE 4 - Deployment**: deploy the MVP as a live demo (Fly.io for the backend, Vercel for the frontend)
   **STAGE 5 - Scaling**: add many filters to evaluate scalability of the approach
 
-The current stage is **STAGE 2 - Frontend**
+The current stage is **STAGE 3 - Intent filtering**
 
 # Stack
 
@@ -55,10 +55,10 @@ The current stage is **STAGE 2 - Frontend**
       MovieList.tsx     movie list sorted by descending score
       FilterChips.tsx   active filter chips (always visible, removable)
       FilterPanel.tsx   filter controls (genre, year, rating, votes)
-      IntentInput.tsx   Stage 3 placeholder textarea
+      IntentInput.tsx   natural-language filter input (textarea, loading state, LLM message display)
     lib/
       types.ts          TypeScript interfaces matching API schemas
-      api.ts            fetchMoviesStat(), fetchMovies()
+      api.ts            fetchMoviesStat(), fetchMovies(), fetchIntent()
   .env.local            gitignored — set NEXT_PUBLIC_API_URL
 ```
 

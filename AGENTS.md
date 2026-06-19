@@ -75,7 +75,7 @@ Scope filter applied at ETL time: `titleType = 'movie'` and `numVotes >= 1000` (
 |---|---|---|
 | `GET /api/movies` | 1 | Returns paginated movies matching a structured filter object |
 | `GET /api/movies/stat` | 1 | Returns stats (total count, average rating, total votes, rating distribution) for a filter |
-| `POST /api/intent` | 3 | Accepts raw natural language text, returns a structured filter object (LLM API call, server-side) |
+| `GET /api/intent` | 3 | Accepts raw natural language text + current filter state, returns a structured filter object (LLM API call, server-side) |
 
 The structured filter object is the shared contract between frontend and backend. Its shape is defined by a Pydantic model in the backend and reused across all three endpoints.
 
@@ -98,7 +98,7 @@ api/
       __init__.py     shared apply_filters() helper
       movies.py       GET /api/movies
       movies_stat.py  GET /api/movies/stat
-      intent.py       POST /api/intent (Stage 3)
+      intent.py       GET /api/intent (Stage 3)
   scripts/
     etl.py            one-time ETL: download IMDb TSVs → SQLite
   tests/
@@ -118,10 +118,10 @@ frontend/
       MovieList.tsx   movie list pre-sorted by average_rating desc
       FilterChips.tsx always-visible active filter chips with remove buttons
       FilterPanel.tsx filter controls: genre Select, year inputs (cross-validated: min≤max), rating Slider, votes Select
-      IntentInput.tsx Stage 3 placeholder (disabled textarea)
+      IntentInput.tsx Stage 3 natural-language filter input: textarea, Submit button, loading state, displays LLM clarification message
     lib/
       types.ts        TS interfaces mirroring API Pydantic schemas
-      api.ts          fetchMoviesStat(filters), fetchMovies(filters)
+      api.ts          fetchMoviesStat(filters), fetchMovies(filters), fetchIntent(intentText, currentFilters)
       utils.ts        shadcn/ui class merging utility (cn)
   .env.local          gitignored — NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
