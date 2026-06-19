@@ -217,6 +217,7 @@ export function FilterPanel({ filters, onPendingChange, onApply }: FilterPanelPr
           max={10}
           step={0.1}
           value={[displayRating]}
+          fillToMax
           onValueChange={(vals) => {
             const val = typeof vals === "number" ? vals : vals[0]
             setDragRating(val)
@@ -243,6 +244,7 @@ export function FilterPanel({ filters, onPendingChange, onApply }: FilterPanelPr
             max={VOTES_MAX_IDX}
             step={0.01}
             value={[displayVotesPos]}
+            fillToMax
             onValueChange={(vals) => {
               const pos = typeof vals === "number" ? vals : vals[0]
               setDragVotesPos(pos)

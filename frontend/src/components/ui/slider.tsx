@@ -8,20 +8,25 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  fillToMax = false,
   ...props
-}: SliderPrimitive.Root.Props) {
-  const _values = Array.isArray(value)
-    ? value
-    : Array.isArray(defaultValue)
-      ? defaultValue
+}: SliderPrimitive.Root.Props & { fillToMax?: boolean }) {
+  const effectiveValue = fillToMax && Array.isArray(value) ? [value[0], max] : value
+  const effectiveDefaultValue =
+    fillToMax && Array.isArray(defaultValue) ? [defaultValue[0], max] : defaultValue
+
+  const _values = Array.isArray(effectiveValue)
+    ? effectiveValue
+    : Array.isArray(effectiveDefaultValue)
+      ? effectiveDefaultValue
       : [min, max]
 
   return (
     <SliderPrimitive.Root
       className={cn("data-horizontal:w-full data-vertical:h-full", className)}
       data-slot="slider"
-      defaultValue={defaultValue}
-      value={value}
+      defaultValue={effectiveDefaultValue}
+      value={effectiveValue}
       min={min}
       max={max}
       thumbAlignment="edge"
@@ -41,7 +46,10 @@ function Slider({
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
             key={index}
-            className="relative block size-3 shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
+            className={cn(
+              "relative block size-3 shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50",
+              fillToMax && index === _values.length - 1 && "hidden pointer-events-none"
+            )}
           />
         ))}
       </SliderPrimitive.Control>
