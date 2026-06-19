@@ -15,13 +15,21 @@ When starting a new session, or when the user asks to implement a new feature or
 - If the user chooses "Standard", proceed normally with the domain rules defined in this file.
 - If the user chooses "Strict", use the following human-agent interaction directives :
   - **use the agentic ReAct (Reason->Act) workflow** :
-    1. reason, in a collaborative way with the human; the goal is to align both the human and the AI agent on the objective; some key decisions may be made (eg. design, architecture, uesd libraries, etc.)
+    - **Continuation shortcut:** Before starting steps 1–6, scan the repo root for a `PLAN_*.md` file whose content covers the current task (check the `## Path` section). If one exists with a `## TODO list` containing unchecked items, steps 1–6 are complete: briefly recap the remaining TODO items and proceed directly to step 8.
+    1. reason, in a collaborative way with the human; the goal is to align both the human and the AI agent on the objective; some key decisions may be made (eg. design, architecture, used libraries, etc.)
     2. wait for human approval of the objectives and decisions
     3. once the objective is well defined and decisions made, describe in natural language **what** changes are needed at a system/feature level (e.g. "update the backend endpoint to accept an array", "update the frontend fetch call"); no file names, function names, or test cases — those belong in the plan (step 5)
     4. wait for human approval of the path
     5. based on the approved path, plan the updates
     6. wait for human approval of the plan
-    7. transform the plan into a TODO list
+    7. **before any file edit**: persist the plan to `PLAN_<intent>.md` at the repo root, where `<intent>` is a short kebab-case label for the feature or task (e.g. `PLAN_add-auth.md`, `PLAN_refactor-api.md`). The file must include the following four sections **in this order**, mirroring the workflow steps that produced them:
+       - `## Design decisions` — key choices agreed in steps 1–2 (architecture, libraries, trade-offs)
+       - `## Path` — system-level description of what changes, agreed in steps 3–4
+       - `## Plan` — detailed file/function-level breakdown from steps 5–6
+       - `## TODO list` — markdown checkboxes, one per task, updated as work progresses
+       > Note: `## Plan` and `## TODO list` may be merged when plan items are detailed enough to stand as self-contained tasks.
+
+       This file is the authoritative cross-session record. **No file edit is allowed until it exists.**
     8. act by implementing the tasks of the TODO list
     note: of course, developments and brainstorming with the human may impact the TODO list; in such a case, inform the human and ask for its approval
   - **clear separation of coding and testing tasks**: imperatively maintain strict separation between code and test changes, with Human-in-the-Loop (HITL) checkpoints. Two acceptable orderings:

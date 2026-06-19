@@ -11,3 +11,5 @@ The Workflow & Agent-Human Interaction Guidelines in **AGENTS.md** apply.
 For the Initialization Check question, present it in a user-freindly selectable manner.
 
 For the planning steps, use `EnterPlanMode` to create and present implementation plans.
+
+In Strict Maintainer mode, after `PLAN_<STAGE>.md` is saved, additionally create a `TaskCreate` task for each TODO item and update task statuses (`in_progress` / `completed`) as work progresses. This provides convenient in-session tracking on top of the persistent plan file.
