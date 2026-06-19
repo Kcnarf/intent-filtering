@@ -26,7 +26,7 @@ function MiniScoreBars({ data }: { data: MoviesStatOut }) {
           key={b.label}
           title={`${b.label}: ${b.count.toLocaleString()} movies (${((b.count / data.total_count) * 100).toFixed(1)}% of ${data.total_count.toLocaleString()})`}
           style={{ height: `${(b.count / maxMoviesCount) * 100}%` }}
-          className="flex-1 rounded-sm bg-yellow-400/80"
+          className="flex-1 rounded-sm bg-primary/80"
         />
       ))}
     </div>
@@ -64,7 +64,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b px-4 py-3 lg:px-6">
+      <header className="border-b bg-black px-4 py-3 lg:px-6">
         <h1 className="text-lg font-semibold tracking-tight">Intent Filtering</h1>
       </header>
 

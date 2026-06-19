@@ -39,7 +39,7 @@ export function MovieList({ movies, loading }: MovieListProps) {
               </span>
             )}
           </span>
-          <span className="shrink-0 font-bold tabular-nums">
+          <span className="shrink-0 font-bold tabular-nums text-primary">
             {movie.average_rating?.toFixed(1) ?? "—"}
           </span>
           <span className="w-12 shrink-0 text-right text-muted-foreground tabular-nums">
