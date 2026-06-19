@@ -76,64 +76,98 @@ interface FilterChipsProps {
   pendingFilters: FilterParamsBody
   onPendingChange: (filters: FilterParamsBody) => void
   onApply: () => void
+  onDiscard: () => void
+  hasPendingChanges: boolean
 }
 
-export function FilterChips({ filters, onChange, pendingFilters, onPendingChange, onApply }: FilterChipsProps) {
+export function FilterChips({ filters, onChange, pendingFilters, onPendingChange, onApply, onDiscard, hasPendingChanges }: FilterChipsProps) {
   const chips = buildChips(filters)
+  const pendingChips = buildChips(pendingFilters as FilterParams)
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {chips.map((chip) => (
-        <span
-          key={chip.label}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
-        >
-          {chip.label}
-          <button
-            type="button"
-            onClick={() => onChange(chip.clear)}
-            className="rounded-full p-0.5 hover:bg-foreground/10"
-            aria-label={`Remove ${chip.label} filter`}
-          >
-            <XIcon className="size-3" />
-          </button>
-        </span>
-      ))}
-
-      {chips.length > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 px-2 text-xs"
-          onClick={() => { onChange({}); onPendingChange({}) }}
-        >
-          Clear all
-        </Button>
+    <div className="flex flex-col gap-2">
+      {/* Pending chips row — shown above active when there are unsaved changes */}
+      {hasPendingChanges && (
+        <div className="flex flex-wrap items-center gap-2">
+          {pendingChips.map((chip) => (
+            <span
+              key={chip.label}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+            >
+              {chip.label}
+              <button
+                type="button"
+                onClick={() => onPendingChange(chip.clear as FilterParamsBody)}
+                className="rounded-full p-0.5 hover:bg-primary/20"
+                aria-label={`Remove pending ${chip.label} filter`}
+              >
+                <XIcon className="size-3" />
+              </button>
+            </span>
+          ))}
+          <Button size="sm" className="h-6 px-2 text-xs" onClick={onApply}>
+            Apply filters
+          </Button>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscard}>
+            Discard
+          </Button>
+        </div>
       )}
 
-      {/* Mobile-only: opens FilterPanel in a bottom sheet */}
-      <Sheet>
-        <SheetTrigger
-          render={
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto h-7 gap-1.5 lg:hidden"
-            />
-          }
-        >
-          <SlidersHorizontalIcon className="size-3.5" />
-          Filters
-        </SheetTrigger>
-        <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Filters</SheetTitle>
-          </SheetHeader>
-          <div className="p-4 pt-2">
-            <FilterPanel filters={pendingFilters} onPendingChange={onPendingChange} onApply={onApply} />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Active chips row */}
+      <div className="flex flex-wrap items-center gap-2">
+        {chips.map((chip) => (
+          <span
+            key={chip.label}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
+          >
+            {chip.label}
+            <button
+              type="button"
+              onClick={() => onChange(chip.clear)}
+              className="rounded-full p-0.5 hover:bg-foreground/10"
+              aria-label={`Remove ${chip.label} filter`}
+            >
+              <XIcon className="size-3" />
+            </button>
+          </span>
+        ))}
+
+        {chips.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={() => onPendingChange({})}
+          >
+            Clear all
+          </Button>
+        )}
+
+        {/* Mobile-only: opens FilterPanel in a bottom sheet */}
+        <Sheet>
+          <SheetTrigger
+            render={
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto h-7 gap-1.5 lg:hidden"
+              />
+            }
+          >
+            <SlidersHorizontalIcon className="size-3.5" />
+            Filters
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+            </SheetHeader>
+            <div className="p-4 pt-2">
+              <FilterPanel filters={pendingFilters} onPendingChange={onPendingChange} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </div>
   )
 }

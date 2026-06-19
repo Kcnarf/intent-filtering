@@ -36,9 +36,13 @@ function MiniScoreBars({ data }: { data: MoviesStatOut }) {
 export default function Home() {
   const [activeFilters, setActiveFilters] = useState<FilterParams>({})
   const [pendingFilters, setPendingFilters] = useState<FilterParamsBody>({})
+  const [pendingDirty, setPendingDirty] = useState(false)
   const [stat, setStat] = useState<MoviesStatOut | null>(null)
   const [movies, setMovies] = useState<MovieOut[]>([])
   const [loading, setLoading] = useState(true)
+
+  const { limit: _l, offset: _o, ...activeFiltersBody } = activeFilters
+  const displayFilters: FilterParamsBody = pendingDirty ? pendingFilters : activeFiltersBody
 
   useEffect(() => {
     setLoading(true)
@@ -52,14 +56,24 @@ export default function Home() {
       .finally(() => setLoading(false))
   }, [activeFilters])
 
-  function handleApply() {
-    setActiveFilters({ ...pendingFilters })
+  function updatePending(filters: FilterParamsBody) {
+    setPendingFilters(filters)
+    setPendingDirty(true)
   }
 
-  function handleChipRemove(updated: FilterParams) {
-    const { limit: _l, offset: _o, ...pendingUpdate } = updated
-    setActiveFilters(updated)
-    setPendingFilters(pendingUpdate)
+  function applyPending() {
+    setActiveFilters({ ...pendingFilters })
+    setPendingDirty(false)
+  }
+
+  function discardPending() {
+    setPendingFilters(activeFiltersBody)
+    setPendingDirty(false)
+  }
+
+  function handleActiveChipRemove(updated: FilterParams) {
+    const { limit: _l, offset: _o, ...body } = updated
+    updatePending(body)
   }
 
   return (
@@ -71,23 +85,25 @@ export default function Home() {
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Sidebar — desktop only */}
         <aside className="hidden w-72 shrink-0 flex-col gap-6 border-r p-6 lg:flex">
-          <IntentInput pendingFilters={pendingFilters} onPendingChange={setPendingFilters} />
-          <FilterPanel filters={pendingFilters} onPendingChange={setPendingFilters} onApply={handleApply} />
+          <IntentInput contextFilters={displayFilters} onPendingChange={updatePending} />
+          <FilterPanel filters={displayFilters} onPendingChange={updatePending} />
         </aside>
 
         <main className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
           {/* IntentInput — mobile only */}
           <div className="lg:hidden">
-            <IntentInput pendingFilters={pendingFilters} onPendingChange={setPendingFilters} />
+            <IntentInput contextFilters={displayFilters} onPendingChange={updatePending} />
           </div>
 
           {/* Active filter chips (always visible; Sheet trigger hidden on lg+) */}
           <FilterChips
             filters={activeFilters}
-            onChange={handleChipRemove}
+            onChange={handleActiveChipRemove}
             pendingFilters={pendingFilters}
-            onPendingChange={setPendingFilters}
-            onApply={handleApply}
+            onPendingChange={updatePending}
+            onApply={applyPending}
+            onDiscard={discardPending}
+            hasPendingChanges={pendingDirty}
           />
 
           {/* Big Numbers */}

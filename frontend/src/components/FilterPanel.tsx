@@ -134,10 +134,9 @@ function GenreMultiSelect({
 interface FilterPanelProps {
   filters: FilterParamsBody
   onPendingChange: (filters: FilterParamsBody) => void
-  onApply: () => void
 }
 
-export function FilterPanel({ filters, onPendingChange, onApply }: FilterPanelProps) {
+export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
   // null = idle (slider reads from props); non-null = user is dragging (local visual feedback).
   // This avoids useEffect-based sync: when props change externally (e.g. Stage 3 intent update
   // or Clear all), dragRating is null so the slider immediately reflects the new prop value.
@@ -294,7 +293,6 @@ export function FilterPanel({ filters, onPendingChange, onApply }: FilterPanelPr
         </div>
       </div>
 
-      <Button variant="default" onClick={onApply}>Apply</Button>
     </div>
   )
 }

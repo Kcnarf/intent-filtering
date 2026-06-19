@@ -1,16 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { fetchIntent } from "@/lib/api"
 import type { FilterParamsBody } from "@/lib/types"
 
 interface IntentInputProps {
-  pendingFilters: FilterParamsBody
+  contextFilters: FilterParamsBody
   onPendingChange: (filters: FilterParamsBody) => void
 }
 
-export function IntentInput({ pendingFilters, onPendingChange }: IntentInputProps) {
+export function IntentInput({ contextFilters, onPendingChange }: IntentInputProps) {
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -19,7 +18,7 @@ export function IntentInput({ pendingFilters, onPendingChange }: IntentInputProp
     if (!text.trim() || loading) return
     setLoading(true)
     try {
-      const result = await fetchIntent(text.trim(), pendingFilters)
+      const result = await fetchIntent(text.trim(), contextFilters)
       onPendingChange(result.filters)
       setMessage(result.message ?? null)
     } catch {
@@ -38,12 +37,16 @@ export function IntentInput({ pendingFilters, onPendingChange }: IntentInputProp
           setText(e.target.value)
           if (message) setMessage(null)
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSubmit()
+          }
+        }}
         placeholder='Describe what you want, e.g. "sci-fi from the 90s with a high score"…'
         className="min-h-20 w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
-      <Button onClick={handleSubmit} disabled={loading || !text.trim()}>
-        {loading ? "Processing…" : "Apply intent"}
-      </Button>
+      {loading && <p className="text-sm text-muted-foreground">Processing…</p>}
       {message && <p className="text-sm text-muted-foreground">{message}</p>}
     </div>
   )
