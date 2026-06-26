@@ -174,3 +174,7 @@ pnpm tsc --noEmit
 ## Testing
 
 The project includes a comprehensive test suite. See `TESTING.md` for detailed testing conventions, organization, and guidance for all contributors.
+
+## Coding Conventions
+
+All code follows the patterns defined in **CODING.md**.
