@@ -15,7 +15,7 @@ When starting a new session, or when the user asks to implement a new feature or
 - If the user chooses "Standard", proceed normally with the domain rules defined in this file.
 - If the user chooses "Strict", use the following human-agent interaction directives :
   - **use the below (ReAct-based) agentic Reason->Persist->Act workflow** :
-    - **Continuation shortcut:** Before starting step 1 REASON, scan the repo root for a `PLAN-*.md` file whose content covers the current task (check the `## Path` section). If one exists with a `## TODO list` containing unchecked items, step REASON is complete: briefly recap the remaining TODO items and proceed directly to step ACT.
+    - **Continuation shortcut:** Before starting step 1 REASON, scan the `plans/` directory for a `plan-*.md` file whose content covers the current task (check the `## Path` section). If one exists with a `## TODO list` containing unchecked items, step REASON is complete: briefly recap the remaining TODO items and proceed directly to step ACT.
     1. REASON :
       1.1. in a collaborative way (between the AI agent and human), align both the human and the AI agent on the objective; some key decisions may be made (eg. design, architecture, used libraries, etc.)
       1.2. wait for human approval of the objectives and decisions
@@ -24,7 +24,7 @@ When starting a new session, or when the user asks to implement a new feature or
       1.5. based on the approved path, plan the updates; this step defines **how** changes should be implemented
       1.6. wait for human approval of the plan
     2. PERSIST
-      **before any file edit**: persist the plan to `PLAN-<intent>.md` at the repo root, where `<intent>` is a short kebab-case label for the feature or task (e.g. `PLAN-add-auth.md`, `PLAN-refactor-api.md`, `PLAN-<issue_number>`). The file must include the following four sections **in this order**, mirroring the workflow's REASON steps that produced them:
+      **before any file edit**: persist the plan to `plans/plan-<intent>.md`, where `<intent>` is a short kebab-case label for the feature or task (e.g. `plans/plan-add-auth.md`, `plans/plan-refactor-api.md`, `plans/plan-<issue_number>.md`). The file must include the following four sections **in this order**, mirroring the workflow's REASON steps that produced them:
         - `## Design decisions` — key choices agreed in steps 1.1–1.2 (architecture, libraries, trade-offs)
         - `## Path` — system-level description of what changes, agreed in steps 1.3–1.4
         - `## Plan` — detailed file/function-level breakdown from steps 1.5–1.6
