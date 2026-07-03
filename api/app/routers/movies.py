@@ -18,6 +18,6 @@ async def get_movies(
     db: AsyncSession = Depends(get_db),
 ):
     query = apply_filters(select(Movie), params)
-    query = query.order_by(Movie.num_votes.desc()).limit(params.limit).offset(params.offset)
+    query = query.order_by(Movie.average_rating.desc()).limit(params.limit).offset(params.offset)
     result = await db.execute(query)
     return result.scalars().all()

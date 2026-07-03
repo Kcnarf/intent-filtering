@@ -11,10 +11,6 @@ import { IntentInput } from "@/components/IntentInput"
 import { MiniScoreBars } from "@/components/MiniScoreBars"
 import { MovieList } from "@/components/MovieList"
 
-function byRatingDescending(a: MovieOut, b: MovieOut): number {
-  return (b.average_rating ?? 0) - (a.average_rating ?? 0)
-}
-
 export default function Home() {
   const [activeFilters, setActiveFilters] = useState<FilterParams>({})
   const [pendingFilters, setPendingFilters] = useState<FilterParamsBody>({})
@@ -30,9 +26,8 @@ export default function Home() {
     setLoading(true)
     Promise.all([fetchMoviesStat(activeFilters), fetchMovies(activeFilters)])
       .then(([moviesStat, fetchedMovies]) => {
-        const sortedMovies = [...fetchedMovies].sort(byRatingDescending)
         setStat(moviesStat)
-        setMovies(sortedMovies)
+        setMovies(fetchedMovies)
       })
       .finally(() => setLoading(false))
   }, [activeFilters])
