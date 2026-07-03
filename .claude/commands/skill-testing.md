@@ -1,8 +1,15 @@
+---
+name: skill-testing
+description: Testing conventions for this project's backend integration tests (Python/pytest). Invoke this before writing, reviewing, or modifying any test — including single test cases, assertion patterns, or checklist reviews. Covers test class structure (nested classes as describe-groups), naming format (test_should_*), assertion patterns for filtered result sets, and the project's integration-only testing scope.
+---
+
 # Testing Conventions
 
 This document outlines testing conventions. All contributors should follow these patterns when writing or modifying tests.
 
-The documents starts with generic rules and guidelines, then provides project-specific ones.
+The document starts with generic rules and guidelines, then provides project-specific ones.
+
+---
 
 ## Test Organization Structure
 
@@ -13,7 +20,7 @@ Group tests by API endpoints, function or parameter, not by outcome (error vs. s
 describe('first-function-name'):
   describe('first-parameter-name'):
     test('should accept value with expected syntax')
-    test('should throw an error if vlue value is syntaxically invalid')
+    test('should throw an error if value is syntactically invalid')
     test('should call sub-method with correct value when provided')
     test('should not call sub-method when parameter omitted')
     ...
@@ -86,15 +93,17 @@ Movie(genres="Action"), Movie(genres="Action,Comedy")
 Movie(genres="Action"), Movie(genres="Action,Comedy"), Movie(genres="Drama")
 ```
 
-## Unit Tests
+## Test Principles
 
-### Unit Tests: Code Responsibility
+These principles apply to unit and integration tests. They do **not** apply to E2E tests — E2E tests cover representative user journeys, not exhaustive parameter combinations, so the combinatorial rules (edge cases, parameter-level coverage) are impractical and inappropriate at that level.
 
-Unit tests focus exclusively on your code's behavior, not on the behavior of functions it calls.
+### Code Responsibility
 
-**Core principle:** Only test the behavior of the function under test. Any function your code calls—whether from a library or another part of your codebase—should be assumed to work correctly and should not be tested.
+Tests focus exclusively on your code's behavior, not on the behavior of functions or frameworks it calls.
 
-**Why:** Focuses on the responsibility of your function; avoids redundant testing of dependencies; tests remain valid when dependencies change or internal functions are refactored.
+**Core principle:** Only test the behavior of the code under test. Any function your code calls—whether from a library or another part of your codebase—should be assumed to work correctly and should not be tested.
+
+**Why:** Focuses on the responsibility of your code; avoids redundant testing of dependencies; tests remain valid when dependencies change or internal functions are refactored.
 
 **Good examples:**
 - Test that you called `str.split()` with the correct separator ✅ (your responsibility: passing correct args)
@@ -108,13 +117,13 @@ Unit tests focus exclusively on your code's behavior, not on the behavior of fun
 
 **The key question:** Before writing any test, ask: "Who is responsible for this behavior — my code, or a dependency?" If the answer is a dependency, don't test it.
 
-### Unit Tests: Parameter Passing Verification
+### Parameter Passing Verification
 
-Use stubs to directly verify that called methods are called with correct parameters. Do not infer parameter passing from output behavior.
+Verify that called methods receive correct parameters. Do not infer parameter passing from output behavior alone.
 
 **Why:** Tests the implementation contract explicitly; catches parameter mismatches without relying on behavior inference; enables verification that methods are NOT called when parameters are omitted.
 
-### Unit Tests: Edge Case Testing
+### Edge Case Testing
 
 For error conditions, test both the failure case AND the success boundary case.
 
@@ -152,7 +161,7 @@ Frontend will not be tested
 
 This project currently focuses on **integration test of the backend API**, in order to check API responds the right way.
 
-**If unit tests are ever added:** They would follow the patterns defined in [Unit Tests: Code Responsibility](#unit-tests-code-responsibility) above.
+**If unit tests are ever added:** They follow the same principles defined in [Test Principles](#test-principles) above, with the addition of mocking/stubbing external dependencies.
 
 ## Running Tests
 
@@ -160,3 +169,12 @@ This project currently focuses on **integration test of the backend API**, in or
 cd api
 uv run pytest
 ```
+
+---
+
+## Before finishing a testing session
+
+- [ ] All new/modified tests pass (`uv run pytest`)
+- [ ] Test descriptions follow the `should ...` format
+- [ ] Subset operation tests assert both count and exact set
+- [ ] Test data includes at least one item that should NOT appear in the result

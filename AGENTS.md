@@ -41,6 +41,12 @@ When starting a new session, or when the user asks to implement a new feature or
   - **For multi-file changes**: If a task requires changes to more than 3 source files, stop and break it into smaller tasks first.
   - **Commits**: Never commit changes; the project maintainer handles this.
 
+## Conventions
+
+Coding and testing conventions are defined as skills. Invoke the relevant one before starting work, regardless of workflow mode:
+- `/skill-coding` — coding rules for implementation sessions
+- `/skill-testing` — testing rules for test sessions
+
 ## Project Overview
 
 A Single Page App experimenting with NLP-based intent filtering on IMDb data. The goal is to replace traditional UI filters (checkboxes, dropdowns) with a natural-language text area, improving UX by letting users describe what they want in plain text.
@@ -171,10 +177,5 @@ pnpm tsc --noEmit
 
 **Year range constraint**: `FilterParams` enforces `year_min ≤ year_max` via a Pydantic v2 `model_validator`. Violations return HTTP 422. A companion `ValidationError` exception handler in `main.py` is required because FastAPI does not automatically intercept Pydantic errors raised from `Depends()` models (only from request body parsing).
 
-## Testing
 
-The project includes a comprehensive test suite. See `TESTING.md` for detailed testing conventions, organization, and guidance for all contributors.
 
-## Coding Conventions
-
-All code follows the patterns defined in **CODING.md**.

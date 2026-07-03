@@ -1,8 +1,15 @@
+---
+name: skill-coding
+description: Project coding conventions for TypeScript/React and Python/FastAPI. Invoke this before any implementation session — writing, reviewing, or refactoring code in this project, regardless of language or file.
+---
+
 # Coding Conventions
 
 Guidance for AI coding assistants and human contributors.
 
 Each section starts with anti-patterns to avoid, then lists good practices to reinforce.
+
+> Code examples throughout are in TypeScript, but every rule applies to all languages used in this project (TypeScript/React frontend and Python/FastAPI backend).
 
 ---
 
@@ -41,13 +48,17 @@ const hasResults = !isLoading && data != null && data.items.length > 0
 if (hasResults) { render(data) }
 ```
 
+> Note: use `!= null` (loose), not `!== null`, when the value can be either `null` or `undefined` — a strict check against only one of them lets the other slip through and crash on `.items`.
+
 ---
 
 ### Single definition for shared utilities (DRY)
 
-A utility function must be defined **once** in a shared module and imported wherever needed. Never copy-paste a helper into multiple files.
+A utility function — or any non-trivial logic, not just helpers labeled "utility" — must be defined **once** in a shared module and imported wherever needed. Never copy-paste logic into multiple files.
 
-**Why:** Multiple copies drift apart silently; there is no canonical version to fix or update.
+Before writing a new function or component, search the codebase (grep/glob) for an existing one with similar purpose or name. Extend or import it rather than duplicating.
+
+**Why:** Multiple copies drift apart silently; there is no canonical version to fix or update. Checking first is cheaper than de-duplicating later.
 
 ```ts
 // ❌ — formatDate defined independently in module A and module B
@@ -132,9 +143,33 @@ let isDirty = false
 
 ---
 
-## Frontend (React / TypeScript)
+## Project specific coding rules
 
-### Components in their own files
+---
+
+### TypeScript - No `any`, no non-null assertions
+
+Never use `any` to silence a type error — use `unknown` and narrow it, or fix the underlying type. Never use the non-null assertion operator (`!`) to bypass a null check — handle the `null`/`undefined` case explicitly.
+
+**Why:** Both are ways of telling the type checker to stop checking, which removes the safety net at exactly the point it's most likely needed.
+
+```ts
+// ❌
+function parse(input: any) { return input.value }
+const user = getUser()!
+
+// ✅
+function parse(input: unknown) {
+  if (typeof input === "object" && input !== null && "value" in input) {
+    return input.value
+  }
+  throw new Error("invalid input")
+}
+const user = getUser()
+if (!user) throw new Error("user not found")
+```
+
+### React - Components in their own files
 
 Every React component with its own props or render logic belongs in its own file under `components/`. Do not define components inside a page file.
 
@@ -172,7 +207,34 @@ export function MovieList() {
 
 ---
 
-### Centralised API module
+### React - No logic inside JSX
+
+Keep the JSX returned by a component declarative. Extract any filtering, sorting, or conditional computation to a named variable above the `return`, even if the component otherwise stays under the size limit.
+
+**Why:** Staying under the line limit doesn't help if the return statement itself is doing the thinking — a reader (or agent) scanning the render output should see *what* is shown, not have to evaluate logic to find out.
+
+```tsx
+// ❌ — logic embedded directly in JSX
+return (
+  <div>
+    {items.filter(i => i.active && i.score > threshold).map(i => (
+      <Card key={i.id} highlighted={i.score > 90 && !i.archived} />
+    ))}
+  </div>
+)
+
+// ✅ — logic named above the return, JSX stays declarative
+const visibleItems = items.filter(i => i.active && i.score > threshold)
+return (
+  <div>
+    {visibleItems.map(i => <Card key={i.id} highlighted={isHighlighted(i)} />)}
+  </div>
+)
+```
+
+---
+
+### React - Centralised API module
 
 All `fetch` calls live in `lib/api.ts`. Components never call `fetch()` directly.
 
@@ -186,3 +248,12 @@ const res = await fetch(`/api/movies?genre=${genre}`)
 import { fetchMovies } from "@/lib/api"
 const movies = await fetchMovies({ genre })
 ```
+
+---
+
+## Before finishing a coding session
+
+- [ ] Lint passes with zero warnings
+- [ ] Typecheck / build passes
+- [ ] No `any`, no non-null assertions (`!`), no leftover `console.log`
+- [ ] No new duplicated logic — checked via search, not just memory
