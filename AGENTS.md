@@ -79,7 +79,7 @@ Scope filter applied at ETL time: `titleType = 'movie'` and `numVotes >= 1000` (
 
 | Endpoint | Stage | Purpose |
 |---|---|---|
-| `GET /api/movies` | 1 | Returns paginated movies matching a structured filter object |
+| `GET /api/movies` | 1 | Returns paginated movies matching a structured filter object; supports `sort_by` and `sort_direction` query params (Stage 2) |
 | `GET /api/movies/stat` | 1 | Returns stats (total count, average rating, total votes, rating distribution) for a filter |
 | `GET /api/intent` | 3 | Accepts raw natural language text + current filter state, returns a structured filter object (LLM API call, server-side) |
 
@@ -87,7 +87,7 @@ The structured filter object is the shared contract between frontend and backend
 
 ### Frontend (Stage 2)
 
-Next.js 16 SPA (App Router, TypeScript, Tailwind CSS v4, shadcn/ui). Single dashboard page: three Big Number cards (total films, avg score with mini score distribution, total votes) + a movie list sorted by descending rating + filter controls. No paginated list of films — the primary view is aggregated.
+Next.js 16 SPA (App Router, TypeScript, Tailwind CSS v4, shadcn/ui). Single dashboard page: three Big Number cards (total films, avg rating with mini rating distribution, total votes) + a movie list with sortable columns (rating, votes, year — sorted server-side) + filter controls. No paginated list of films — the primary view is aggregated.
 
 Active filters are always visible as removable chips so that Stage 3 intent auto-population is immediately apparent to the user without opening any panel.
 
@@ -99,10 +99,10 @@ api/
     main.py           FastAPI app entry point, CORS config, lifespan
     database.py       async engine + session factory + create_tables()
     models.py         SQLAlchemy ORM models (movies, people, movie_people)
-    schemas.py        Pydantic models (FilterParams, MovieOut, MoviesStatOut, …)
+    schemas.py        Pydantic models (FilterParams + SortField/SortDirection enums, MovieOut, MoviesStatOut, …)
     routers/
       __init__.py     shared apply_filters() helper
-      movies.py       GET /api/movies
+      movies.py       GET /api/movies — dynamic sort via sort_by + sort_direction query params
       movies_stat.py  GET /api/movies/stat
       intent.py       GET /api/intent (Stage 3)
   scripts/
@@ -121,12 +121,13 @@ frontend/
     components/
       ui/             shadcn/ui generated components (button, badge, card, …)
       BigNumber.tsx   reusable stat card: type ('total_count'|'average_rating'|'total_votes'), value, optional children slot
-      MovieList.tsx   movie list pre-sorted by average_rating desc
+      MovieList.tsx   movie list with sortable column headers (rating, votes, year); accepts sortBy/sortDirection/onSortChange props; sorting is server-side
+      SortableColumnHeader.tsx  clickable column header button with ArrowUp/ArrowDown/ArrowUpDown icon; active column highlighted
       FilterChips.tsx always-visible active filter chips with remove buttons
       FilterPanel.tsx filter controls: genre Select, year inputs (cross-validated: min≤max), rating Slider, votes Select
       IntentInput.tsx Stage 3 natural-language filter input: textarea, Submit button, loading state, displays LLM clarification message
     lib/
-      types.ts        TS interfaces mirroring API Pydantic schemas
+      types.ts        TS interfaces mirroring API Pydantic schemas; includes SortField and SortDirection type aliases
       api.ts          fetchMoviesStat(filters), fetchMovies(filters), fetchIntent(intentText, currentFilters)
       utils.ts        shadcn/ui class merging utility (cn)
   .env.local          gitignored — NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -172,6 +173,8 @@ pnpm tsc --noEmit
 **Migration strategy**: `CREATE TABLE IF NOT EXISTS` on startup (via SQLAlchemy metadata). No Alembic for this PoC.
 
 **Filter surface (Stage 1–2)**: genre, year range, minimum rating, minimum vote count. People-based filters (director, actor) planned for Stage 5.
+
+**Movie list sort (Stage 2)**: `GET /api/movies` accepts `sort_by` (`average_rating` | `num_votes` | `start_year`, default `average_rating`) and `sort_direction` (`asc` | `desc`, default `desc`) query params. The frontend `MovieList` component renders clickable column headers that toggle direction or switch column; clicking triggers a new fetch with updated `FilterParams`. Sorting is entirely server-side — the frontend never reorders the response array.
 
 **Movies stat (Stage 1–2)**: total matching films, average rating, total votes, rating distribution (9 buckets from 1-2 to 9-10).
 

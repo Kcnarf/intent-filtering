@@ -46,7 +46,7 @@ App header
 IntentInput (Stage 3 placeholder — disabled)
 FilterChips (always visible) + Sheet → FilterPanel
 BigNumber: Total films
-BigNumber: Avg score  +  mini CSS score bars (children slot)
+BigNumber: Avg rating  +  mini CSS rating bars (children slot)
 BigNumber: Total votes
 MovieList (≤50 films, sorted by average_rating desc)
 ```
@@ -109,7 +109,7 @@ cd frontend && pnpm dev
 
 Open `http://localhost:3000` and verify:
 - Big Numbers load from API
-- Mini score bars render inside Avg score card
+- Mini rating bars render inside Avg rating card
 - Movie list appears sorted by rating
 - Filter chips update on filter changes
 - Mobile layout: single column, Sheet opens on "Adjust filters"

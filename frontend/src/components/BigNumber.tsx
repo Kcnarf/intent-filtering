@@ -4,7 +4,7 @@ export type BigNumberType = "total_count" | "average_rating" | "total_votes"
 
 const LABELS: Record<BigNumberType, string> = {
   total_count: "Films",
-  average_rating: "Avg Score",
+  average_rating: "Avg Rating",
   total_votes: "Total Votes",
 }
 

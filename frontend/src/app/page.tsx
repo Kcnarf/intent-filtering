@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { fetchMovies, fetchMoviesStat } from "@/lib/api"
 import { formatVotes } from "@/lib/utils"
-import type { FilterParams, FilterParamsBody, MovieOut, MoviesStatOut } from "@/lib/types"
+import type { FilterParams, FilterParamsBody, MovieOut, MoviesStatOut, SortDirection, SortField } from "@/lib/types"
 import { BigNumber } from "@/components/BigNumber"
 import { FilterChips } from "@/components/FilterChips"
 import { FilterPanel } from "@/components/FilterPanel"
@@ -18,19 +18,22 @@ export default function Home() {
   const [stat, setStat] = useState<MoviesStatOut | null>(null)
   const [movies, setMovies] = useState<MovieOut[]>([])
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState<SortField>("average_rating")
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
 
   const { limit: _limit, offset: _offset, ...activeFiltersBody } = activeFilters
   const displayFilters: FilterParamsBody = pendingDirty ? pendingFilters : activeFiltersBody
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([fetchMoviesStat(activeFilters), fetchMovies(activeFilters)])
+    const movieParams: FilterParams = { ...activeFilters, sort_by: sortBy, sort_direction: sortDirection }
+    Promise.all([fetchMoviesStat(activeFilters), fetchMovies(movieParams)])
       .then(([moviesStat, fetchedMovies]) => {
         setStat(moviesStat)
         setMovies(fetchedMovies)
       })
       .finally(() => setLoading(false))
-  }, [activeFilters])
+  }, [activeFilters, sortBy, sortDirection])
 
   function updatePending(filters: FilterParamsBody) {
     setPendingFilters(filters)
@@ -40,6 +43,11 @@ export default function Home() {
   function applyPending() {
     setActiveFilters({ ...pendingFilters })
     setPendingDirty(false)
+  }
+
+  function handleSortChange(field: SortField, direction: SortDirection) {
+    setSortBy(field)
+    setSortDirection(direction)
   }
 
   function discardPending() {
@@ -94,7 +102,13 @@ export default function Home() {
             <BigNumber type="total_votes" value={totalVotesDisplay} />
           </div>
 
-          <MovieList movies={movies} loading={loading} />
+          <MovieList
+            movies={movies}
+            loading={loading}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+          />
         </main>
       </div>
     </div>

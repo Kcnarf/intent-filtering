@@ -52,7 +52,8 @@ The current stage is **STAGE 3 - Intent filtering**
     components/
       ui/               shadcn/ui generated components
       BigNumber.tsx     reusable stat card (type, value, optional children)
-      MovieList.tsx     movie list sorted by descending score
+      MovieList.tsx     movie list with sortable columns (rating, votes, year) — sorted server-side
+      SortableColumnHeader.tsx  clickable column header with sort direction indicator
       FilterChips.tsx   active filter chips (always visible, removable)
       FilterPanel.tsx   filter controls (genre, year, rating, votes)
       IntentInput.tsx   natural-language filter input (textarea, loading state, LLM message display)

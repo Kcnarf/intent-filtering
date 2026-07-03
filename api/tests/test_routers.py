@@ -244,6 +244,67 @@ class TestGetMovies:
             with_zero_offset = (await test_client.get("/api/movies", params={"limit": 1, "offset": 0})).json()
             assert without_offset[0]["id"] == with_zero_offset[0]["id"]
 
+    class TestSortParams:
+        @staticmethod
+        def _make_sort_movies():
+            return [
+                Movie(id="tt0000001", primary_title="High Rating", original_title="High Rating",
+                      start_year=2020, runtime_minutes=120, genres="Drama",
+                      average_rating=9.0, num_votes=100_000),
+                Movie(id="tt0000002", primary_title="High Votes", original_title="High Votes",
+                      start_year=2000, runtime_minutes=120, genres="Drama",
+                      average_rating=7.0, num_votes=300_000),
+                Movie(id="tt0000003", primary_title="Mid Year", original_title="Mid Year",
+                      start_year=2010, runtime_minutes=120, genres="Drama",
+                      average_rating=5.0, num_votes=200_000),
+            ]
+
+        class TestSortByParam:
+            @pytest.fixture(autouse=True)
+            async def setup_data(self, test_db_session):
+                test_db_session.add_all(TestGetMovies.TestSortParams._make_sort_movies())
+                await test_db_session.commit()
+
+            async def test_should_sort_by_average_rating_desc_by_default(self, test_client):
+                movies = (await test_client.get("/api/movies")).json()
+                assert len(movies) == 3
+                assert [m["id"] for m in movies] == ["tt0000001", "tt0000002", "tt0000003"]
+
+            async def test_should_sort_by_num_votes_when_requested(self, test_client):
+                movies = (await test_client.get("/api/movies", params={"sort_by": "num_votes"})).json()
+                assert len(movies) == 3
+                assert [m["id"] for m in movies] == ["tt0000002", "tt0000003", "tt0000001"]
+
+            async def test_should_sort_by_start_year_when_requested(self, test_client):
+                movies = (await test_client.get("/api/movies", params={"sort_by": "start_year"})).json()
+                assert len(movies) == 3
+                assert [m["id"] for m in movies] == ["tt0000001", "tt0000003", "tt0000002"]
+
+            async def test_should_reject_invalid_sort_by_value(self, test_client):
+                response = await test_client.get("/api/movies", params={"sort_by": "invalid"})
+                assert response.status_code == 422
+
+        class TestSortDirectionParam:
+            @pytest.fixture(autouse=True)
+            async def setup_data(self, test_db_session):
+                test_db_session.add_all(TestGetMovies.TestSortParams._make_sort_movies())
+                await test_db_session.commit()
+
+            async def test_should_sort_descending_by_default(self, test_client):
+                movies = (await test_client.get("/api/movies")).json()
+                assert len(movies) == 3
+                assert [m["id"] for m in movies] == ["tt0000001", "tt0000002", "tt0000003"]
+
+            async def test_should_sort_ascending_when_requested(self, test_client):
+                movies = (await test_client.get("/api/movies",
+                    params={"sort_direction": "asc"})).json()
+                assert len(movies) == 3
+                assert [m["id"] for m in movies] == ["tt0000003", "tt0000002", "tt0000001"]
+
+            async def test_should_reject_invalid_sort_direction_value(self, test_client):
+                response = await test_client.get("/api/movies", params={"sort_direction": "invalid"})
+                assert response.status_code == 422
+
 
 class TestGetMoviesStat:
     class TestBasic:

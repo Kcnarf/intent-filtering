@@ -1,7 +1,19 @@
+from enum import Enum
 from typing import Annotated
 
 from fastapi import HTTPException, Query
 from pydantic import BaseModel, ConfigDict
+
+
+class SortField(str, Enum):
+    average_rating = "average_rating"
+    num_votes = "num_votes"
+    start_year = "start_year"
+
+
+class SortDirection(str, Enum):
+    asc = "asc"
+    desc = "desc"
 
 
 class FilterParamsBody(BaseModel):
@@ -29,6 +41,8 @@ class FilterParams:
         votes_min: int | None = None,
         limit: int = 50,
         offset: int = 0,
+        sort_by: Annotated[SortField, Query()] = SortField.average_rating,
+        sort_direction: Annotated[SortDirection, Query()] = SortDirection.desc,
     ):
         if year_min is not None and year_max is not None and year_min > year_max:
             raise HTTPException(status_code=422, detail="year_min must not exceed year_max")
@@ -40,6 +54,8 @@ class FilterParams:
         self.votes_min = votes_min
         self.limit = limit
         self.offset = offset
+        self.sort_by = sort_by
+        self.sort_direction = sort_direction
 
 
 class MovieOut(BaseModel):

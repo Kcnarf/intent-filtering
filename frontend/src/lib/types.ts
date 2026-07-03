@@ -7,9 +7,14 @@ export interface FilterParamsBody {
   votes_min?: number
 }
 
+export type SortField = "average_rating" | "num_votes" | "start_year"
+export type SortDirection = "asc" | "desc"
+
 export interface FilterParams extends FilterParamsBody {
   limit?: number
   offset?: number
+  sort_by?: SortField
+  sort_direction?: SortDirection
 }
 
 export interface RatingBucketOut {
