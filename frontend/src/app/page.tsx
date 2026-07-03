@@ -59,7 +59,7 @@ export default function Home() {
 
   const totalCountDisplay = loading ? "…" : (stat?.total_count.toLocaleString() ?? "—")
   const averageRatingDisplay = loading ? "…" : (stat?.average_rating?.toFixed(1) ?? "—")
-  const totalVotesDisplay = loading ? "…" : formatVotes(stat?.total_votes ?? 0)
+  const totalVotesDisplay = loading ? "…" : (stat?.total_votes != null ? formatVotes(stat.total_votes) : "—")
   const scoreBars = !loading && stat != null ? <MiniScoreBars data={stat} /> : null
 
   return (

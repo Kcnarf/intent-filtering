@@ -1,27 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronsUpDownIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
+import { formatVotes } from "@/lib/utils"
 import type { FilterParamsBody } from "@/lib/types"
-
-const GENRES = [
-  "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime",
-  "Documentary", "Drama", "Family", "Fantasy", "Film-Noir", "History",
-  "Horror", "Music", "Musical", "Mystery", "Romance", "Sci-Fi",
-  "Sport", "Thriller", "War", "Western",
-]
+import { GenreMultiSelect } from "./GenreMultiSelect"
 
 const YEAR_MIN = 1900
 const YEAR_MAX = 2025
+const RATING_MIN = 1
+const RATING_MAX = 10
 
 const VOTES_STOPS: { label: string; value: number | undefined }[] = [
   { label: "Any", value: undefined },
@@ -32,8 +21,12 @@ const VOTES_STOPS: { label: string; value: number | undefined }[] = [
   { label: "100K", value: 100_000 },
   { label: "500K", value: 500_000 },
 ]
-const VOTES_MAX_IDX = VOTES_STOPS.length - 1  // 6
+const VOTES_MAX_IDX = VOTES_STOPS.length - 1
 const VOTES_SNAP_ZONE = 0.25
+
+function extractSliderSingleValue(vals: number | readonly number[]): number {
+  return typeof vals === "number" ? vals : vals[0]
+}
 
 // Map a slider position (0–VOTES_MAX_IDX) to a votes threshold.
 // Positions < 0.5 map to "Any"; integer positions map to exact presets;
@@ -44,21 +37,25 @@ function posToVotes(pos: number): number | undefined {
   const hi = Math.min(Math.ceil(pos), VOTES_MAX_IDX)
   if (lo === hi) return VOTES_STOPS[lo].value
   const t = pos - Math.floor(pos)
+  const loValue = VOTES_STOPS[lo].value
+  const hiValue = VOTES_STOPS[hi].value
+  if (loValue == null || hiValue == null) return undefined
   return Math.round(
-    Math.pow(10, Math.log10(VOTES_STOPS[lo].value!) * (1 - t) + Math.log10(VOTES_STOPS[hi].value!) * t)
+    Math.pow(10, Math.log10(loValue) * (1 - t) + Math.log10(hiValue) * t)
   )
 }
 
 // Map a votes threshold back to a slider position.
 function votesToPos(votes: number | undefined): number {
-  if (!votes) return 0
-  const idx = VOTES_STOPS.findIndex((s) => s.value === votes)
+  if (votes == null || votes === 0) return 0
+  const idx = VOTES_STOPS.findIndex((stop) => stop.value === votes)
   if (idx >= 0) return idx
   for (let i = 1; i < VOTES_MAX_IDX; i++) {
-    const lo = VOTES_STOPS[i].value!
-    const hi = VOTES_STOPS[i + 1].value!
-    if (votes > lo && votes < hi) {
-      const t = (Math.log10(votes) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))
+    const loStop = VOTES_STOPS[i]
+    const hiStop = VOTES_STOPS[i + 1]
+    if (loStop.value == null || hiStop.value == null) continue
+    if (votes > loStop.value && votes < hiStop.value) {
+      const t = (Math.log10(votes) - Math.log10(loStop.value)) / (Math.log10(hiStop.value) - Math.log10(loStop.value))
       return i + t
     }
   }
@@ -66,69 +63,7 @@ function votesToPos(votes: number | undefined): number {
 }
 
 function formatVotesLabel(votes: number | undefined): string {
-  if (!votes) return "Any"
-  if (votes >= 1_000_000) return `≥ ${(votes / 1_000_000).toFixed(1)}M`
-  if (votes >= 1_000) return `≥ ${Math.round(votes / 1_000)}K`
-  return `≥ ${votes}`
-}
-
-function GenreMultiSelect({
-  selected,
-  onChange,
-}: {
-  selected: string[]
-  onChange: (genres: string[]) => void
-}) {
-  const [open, setOpen] = useState(false)
-
-  const triggerLabel =
-    selected.length === 0
-      ? "All genres"
-      : selected.length <= 2
-        ? selected.join(", ")
-        : `${selected.slice(0, 2).join(", ")} +${selected.length - 2}`
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={<Button variant="outline" className="w-full justify-between font-normal" />}
-      >
-        <span className="truncate">{triggerLabel}</span>
-        <ChevronsUpDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-2">
-        <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-          {GENRES.map((g) => {
-            const checked = selected.includes(g)
-            return (
-              <label
-                key={g}
-                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-accent"
-              >
-                <Checkbox
-                  checked={checked}
-                  onCheckedChange={(v) =>
-                    onChange(v ? [...selected, g] : selected.filter((x) => x !== g))
-                  }
-                />
-                <span className="text-sm">{g}</span>
-              </label>
-            )
-          })}
-        </div>
-        {selected.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-1 w-full text-xs"
-            onClick={() => onChange([])}
-          >
-            Clear
-          </Button>
-        )}
-      </PopoverContent>
-    </Popover>
-  )
+  return votes != null ? `≥ ${formatVotes(votes)}` : "Any"
 }
 
 interface FilterPanelProps {
@@ -141,7 +76,7 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
   // This avoids useEffect-based sync: when props change externally (e.g. Stage 3 intent update
   // or Clear all), dragRating is null so the slider immediately reflects the new prop value.
   const [dragRating, setDragRating] = useState<number | null>(null)
-  const displayRating = dragRating ?? filters.rating_min ?? 1
+  const displayRating = dragRating ?? filters.rating_min ?? RATING_MIN
 
   const [dragYear, setDragYear] = useState<[number, number] | null>(null)
   const displayYear: [number, number] = dragYear ?? [
@@ -208,23 +143,20 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
         <div className="flex justify-between">
           <label className="text-sm font-medium">Min rating</label>
           <span className="text-sm text-muted-foreground tabular-nums">
-            {displayRating > 1 ? `≥ ${displayRating.toFixed(1)}` : "Any"}
+            {displayRating > RATING_MIN ? `≥ ${displayRating.toFixed(1)}` : "Any"}
           </span>
         </div>
         <Slider
-          min={1}
-          max={10}
+          min={RATING_MIN}
+          max={RATING_MAX}
           step={0.1}
           value={[displayRating]}
           fillToMax
-          onValueChange={(vals) => {
-            const val = typeof vals === "number" ? vals : vals[0]
-            setDragRating(val)
-          }}
+          onValueChange={(vals) => setDragRating(extractSliderSingleValue(vals))}
           onValueCommitted={(vals) => {
-            const val = typeof vals === "number" ? vals : vals[0]
+            const val = extractSliderSingleValue(vals)
             setDragRating(null)
-            onPendingChange({ ...filters, rating_min: val > 1 ? val : undefined })
+            onPendingChange({ ...filters, rating_min: val > RATING_MIN ? val : undefined })
           }}
         />
       </div>
@@ -244,12 +176,9 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
             step={0.01}
             value={[displayVotesPos]}
             fillToMax
-            onValueChange={(vals) => {
-              const pos = typeof vals === "number" ? vals : vals[0]
-              setDragVotesPos(pos)
-            }}
+            onValueChange={(vals) => setDragVotesPos(extractSliderSingleValue(vals))}
             onValueCommitted={(vals) => {
-              const pos = typeof vals === "number" ? vals : vals[0]
+              const pos = extractSliderSingleValue(vals)
               const rounded = Math.round(pos)
               const snapped = Math.abs(pos - rounded) <= VOTES_SNAP_ZONE ? rounded : pos
               setDragVotesPos(null)
