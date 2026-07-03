@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { Slider } from "@/components/ui/slider"
-import { cn } from "@/lib/utils"
-import { formatVotes } from "@/lib/utils"
+import { cn, formatVotes } from "@/lib/utils"
 import type { FilterParamsBody } from "@/lib/types"
 import { GenreMultiSelect } from "./GenreMultiSelect"
 

@@ -52,7 +52,7 @@ export function GenreMultiSelect({ selected, onChange }: GenreMultiSelectProps) 
                 <Checkbox
                   checked={checked}
                   onCheckedChange={(v) =>
-                    onChange(v ? [...selected, genre] : selected.filter((g) => g !== genre))
+                    onChange(v ? [...selected, genre] : selected.filter((existingGenre) => existingGenre !== genre))
                   }
                 />
                 <span className="text-sm">{genre}</span>
