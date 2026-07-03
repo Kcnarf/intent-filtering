@@ -1,11 +1,13 @@
-export interface FilterParams {
-  genre?: string
+export interface FilterParamsBody {
   genres_or?: string[]
   genres_and?: string[]
   year_min?: number
   year_max?: number
   rating_min?: number
   votes_min?: number
+}
+
+export interface FilterParams extends FilterParamsBody {
   limit?: number
   offset?: number
 }
@@ -31,15 +33,6 @@ export interface MovieOut {
   genres: string | null
   average_rating: number | null
   num_votes: number | null
-}
-
-export interface FilterParamsBody {
-  genres_or?: string[]
-  genres_and?: string[]
-  year_min?: number
-  year_max?: number
-  rating_min?: number
-  votes_min?: number
 }
 
 export interface IntentOut {
