@@ -2,35 +2,17 @@
 
 import { useEffect, useState } from "react"
 import { fetchMovies, fetchMoviesStat } from "@/lib/api"
-import type { FilterParams, FilterParamsBody, MovieOut, MoviesStatOut, RatingBucketOut } from "@/lib/types"
+import { formatVotes } from "@/lib/utils"
+import type { FilterParams, FilterParamsBody, MovieOut, MoviesStatOut } from "@/lib/types"
 import { BigNumber } from "@/components/BigNumber"
 import { FilterChips } from "@/components/FilterChips"
 import { FilterPanel } from "@/components/FilterPanel"
 import { IntentInput } from "@/components/IntentInput"
+import { MiniScoreBars } from "@/components/MiniScoreBars"
 import { MovieList } from "@/components/MovieList"
 
-function formatVotes(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K`
-  return n.toLocaleString()
-}
-
-function MiniScoreBars({ data }: { data: MoviesStatOut }) {
-  const ratingBuckets:RatingBucketOut[] = data.rating_distribution
-  const maxMoviesCount = Math.max(...ratingBuckets.map((b) => b.count), 1)
-  return (
-    <div className="mt-2 flex h-8 items-end gap-0.5">
-      {ratingBuckets.map((b) => (
-        <div
-          key={b.label}
-          title={`${b.label}: ${b.count.toLocaleString()} movies (${((b.count / data.total_count) * 100).toFixed(1)}% of ${data.total_count.toLocaleString()})`}
-          style={{ height: `${(b.count / maxMoviesCount) * 100}%` }}
-          className="flex-1 rounded-sm bg-primary/80"
-        />
-      ))}
-    </div>
-  )
+function byRatingDescending(a: MovieOut, b: MovieOut): number {
+  return (b.average_rating ?? 0) - (a.average_rating ?? 0)
 }
 
 export default function Home() {
@@ -41,17 +23,16 @@ export default function Home() {
   const [movies, setMovies] = useState<MovieOut[]>([])
   const [loading, setLoading] = useState(true)
 
-  const { limit: _l, offset: _o, ...activeFiltersBody } = activeFilters
+  const { limit: _limit, offset: _offset, ...activeFiltersBody } = activeFilters
   const displayFilters: FilterParamsBody = pendingDirty ? pendingFilters : activeFiltersBody
 
   useEffect(() => {
     setLoading(true)
     Promise.all([fetchMoviesStat(activeFilters), fetchMovies(activeFilters)])
-      .then(([s, m]) => {
-        setStat(s)
-        setMovies(
-          [...m].sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0))
-        )
+      .then(([moviesStat, fetchedMovies]) => {
+        const sortedMovies = [...fetchedMovies].sort(byRatingDescending)
+        setStat(moviesStat)
+        setMovies(sortedMovies)
       })
       .finally(() => setLoading(false))
   }, [activeFilters])
@@ -72,9 +53,14 @@ export default function Home() {
   }
 
   function handleActiveChipRemove(updated: FilterParams) {
-    const { limit: _l, offset: _o, ...body } = updated
-    updatePending(body)
+    const { limit: _limit, offset: _offset, ...filtersBody } = updated
+    updatePending(filtersBody)
   }
+
+  const totalCountDisplay = loading ? "…" : (stat?.total_count.toLocaleString() ?? "—")
+  const averageRatingDisplay = loading ? "…" : (stat?.average_rating?.toFixed(1) ?? "—")
+  const totalVotesDisplay = loading ? "…" : formatVotes(stat?.total_votes ?? 0)
+  const scoreBars = !loading && stat != null ? <MiniScoreBars data={stat} /> : null
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -95,7 +81,6 @@ export default function Home() {
             <IntentInput contextFilters={displayFilters} onPendingChange={updatePending} />
           </div>
 
-          {/* Active filter chips (always visible; Sheet trigger hidden on lg+) */}
           <FilterChips
             filters={activeFilters}
             onChange={handleActiveChipRemove}
@@ -106,25 +91,14 @@ export default function Home() {
             hasPendingChanges={pendingDirty}
           />
 
-          {/* Big Numbers */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <BigNumber
-              type="total_count"
-              value={loading ? "…" : (stat?.total_count.toLocaleString() ?? "—")}
-            />
-            <BigNumber
-              type="average_rating"
-              value={loading ? "…" : (stat?.average_rating?.toFixed(1) ?? "—")}
-            >
-              {!loading && stat && <MiniScoreBars data={stat} />}
+            <BigNumber type="total_count" value={totalCountDisplay} />
+            <BigNumber type="average_rating" value={averageRatingDisplay}>
+              {scoreBars}
             </BigNumber>
-            <BigNumber
-              type="total_votes"
-              value={loading ? "…" : formatVotes(stat?.total_votes ?? 0)}
-            />
+            <BigNumber type="total_votes" value={totalVotesDisplay} />
           </div>
 
-          {/* Movie list */}
           <MovieList movies={movies} loading={loading} />
         </main>
       </div>

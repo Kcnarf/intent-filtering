@@ -10,6 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import type { FilterParams, FilterParamsBody } from "@/lib/types"
+import { formatVotes } from "@/lib/utils"
 import { FilterPanel } from "./FilterPanel"
 
 interface Chip {
@@ -24,62 +25,56 @@ interface GridSlot {
   pendingChip: Chip | null
 }
 
-function formatVotes(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K`
-  return String(n)
-}
-
-function yearLabel(f: FilterParams): string {
-  if (f.year_min && f.year_max) return `${f.year_min}–${f.year_max}`
-  if (f.year_min) return `From ${f.year_min}`
-  if (f.year_max) return `Until ${f.year_max}`
+function yearLabel(filters: FilterParams): string {
+  if (filters.year_min && filters.year_max) return `${filters.year_min}–${filters.year_max}`
+  if (filters.year_min) return `From ${filters.year_min}`
+  if (filters.year_max) return `Until ${filters.year_max}`
   return ""
 }
 
 
 function buildGridSlots(active: FilterParams, pending: FilterParamsBody): GridSlot[] {
-  const p = pending as FilterParams
+  const pendingParams = pending as FilterParams
   const slots: GridSlot[] = []
 
   const aOr = active.genres_or?.length ? active.genres_or : null
-  const pOr = p.genres_or?.length ? p.genres_or : null
+  const pOr = pendingParams.genres_or?.length ? pendingParams.genres_or : null
   if (aOr || pOr) slots.push({
     key: "genres_or", defaultLabel: "All genres",
-    activeChip:  aOr ? { label: aOr.join(" or "),  clear: { ...active, genres_or: undefined } } : null,
-    pendingChip: pOr ? { label: pOr.join(" or "),  clear: { ...p,      genres_or: undefined } } : null,
+    activeChip:  aOr ? { label: aOr.join(" or "),  clear: { ...active,        genres_or: undefined } } : null,
+    pendingChip: pOr ? { label: pOr.join(" or "),  clear: { ...pendingParams, genres_or: undefined } } : null,
   })
 
   const aAnd = active.genres_and?.length ? active.genres_and : null
-  const pAnd = p.genres_and?.length ? p.genres_and : null
+  const pAnd = pendingParams.genres_and?.length ? pendingParams.genres_and : null
   if (aAnd || pAnd) slots.push({
     key: "genres_and", defaultLabel: "All genres",
-    activeChip:  aAnd ? { label: aAnd.join(" + "), clear: { ...active, genres_and: undefined } } : null,
-    pendingChip: pAnd ? { label: pAnd.join(" + "), clear: { ...p,      genres_and: undefined } } : null,
+    activeChip:  aAnd ? { label: aAnd.join(" + "), clear: { ...active,        genres_and: undefined } } : null,
+    pendingChip: pAnd ? { label: pAnd.join(" + "), clear: { ...pendingParams, genres_and: undefined } } : null,
   })
 
   const aYear = active.year_min || active.year_max
-  const pYear = p.year_min || p.year_max
+  const pYear = pendingParams.year_min || pendingParams.year_max
   if (aYear || pYear) slots.push({
     key: "year", defaultLabel: "Any year",
-    activeChip:  aYear ? { label: yearLabel(active), clear: { ...active, year_min: undefined, year_max: undefined } } : null,
-    pendingChip: pYear ? { label: yearLabel(p),      clear: { ...p,      year_min: undefined, year_max: undefined } } : null,
+    activeChip:  aYear ? { label: yearLabel(active),        clear: { ...active,        year_min: undefined, year_max: undefined } } : null,
+    pendingChip: pYear ? { label: yearLabel(pendingParams), clear: { ...pendingParams, year_min: undefined, year_max: undefined } } : null,
   })
 
   const aRating = active.rating_min ?? null
-  const pRating = p.rating_min ?? null
+  const pRating = pendingParams.rating_min ?? null
   if (aRating || pRating) slots.push({
     key: "rating_min", defaultLabel: "Any rating",
-    activeChip:  aRating ? { label: `Rating ≥ ${aRating.toFixed(1)}`, clear: { ...active, rating_min: undefined } } : null,
-    pendingChip: pRating ? { label: `Rating ≥ ${pRating.toFixed(1)}`, clear: { ...p,      rating_min: undefined } } : null,
+    activeChip:  aRating ? { label: `Rating ≥ ${aRating.toFixed(1)}`, clear: { ...active,        rating_min: undefined } } : null,
+    pendingChip: pRating ? { label: `Rating ≥ ${pRating.toFixed(1)}`, clear: { ...pendingParams, rating_min: undefined } } : null,
   })
 
   const aVotes = active.votes_min ?? null
-  const pVotes = p.votes_min ?? null
+  const pVotes = pendingParams.votes_min ?? null
   if (aVotes || pVotes) slots.push({
     key: "votes_min", defaultLabel: "Any votes",
-    activeChip:  aVotes ? { label: `Votes ≥ ${formatVotes(aVotes)}`, clear: { ...active, votes_min: undefined } } : null,
-    pendingChip: pVotes ? { label: `Votes ≥ ${formatVotes(pVotes)}`, clear: { ...p,      votes_min: undefined } } : null,
+    activeChip:  aVotes ? { label: `Votes ≥ ${formatVotes(aVotes)}`, clear: { ...active,        votes_min: undefined } } : null,
+    pendingChip: pVotes ? { label: `Votes ≥ ${formatVotes(pVotes)}`, clear: { ...pendingParams, votes_min: undefined } } : null,
   })
 
   return slots
@@ -97,8 +92,11 @@ interface FilterChipsProps {
 
 export function FilterChips({ filters, onChange, pendingFilters, onPendingChange, onApply, onDiscard, hasPendingChanges }: FilterChipsProps) {
   const slots = buildGridSlots(filters, pendingFilters)
-  const hasActiveFilters  = slots.some((s) => s.activeChip  !== null)
-  const hasPendingFilters = slots.some((s) => s.pendingChip !== null)
+  const hasActiveFilters  = slots.some((slot) => slot.activeChip  !== null)
+  const hasPendingFilters = slots.some((slot) => slot.pendingChip !== null)
+
+  const mobilePendingSlots = slots.filter((slot): slot is GridSlot & { pendingChip: Chip } => slot.pendingChip != null)
+  const mobileActiveSlots  = slots.filter((slot): slot is GridSlot & { activeChip: Chip }  => slot.activeChip  != null)
 
   const filtersSheet = (
     <Sheet>
@@ -125,10 +123,10 @@ export function FilterChips({ filters, onChange, pendingFilters, onPendingChange
             {!hasPendingFilters && (
               <span className="text-xs italic text-muted-foreground">No filters</span>
             )}
-            {slots.map((slot) => slot.pendingChip && (
+            {mobilePendingSlots.map((slot) => (
               <span key={`p-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                 {slot.pendingChip.label}
-                <button type="button" onClick={() => onPendingChange(slot.pendingChip!.clear as FilterParamsBody)} className="rounded-full p-0.5 hover:bg-primary/20" aria-label={`Remove pending ${slot.pendingChip.label} filter`}>
+                <button type="button" onClick={() => onPendingChange(slot.pendingChip.clear as FilterParamsBody)} className="rounded-full p-0.5 hover:bg-primary/20" aria-label={`Remove pending ${slot.pendingChip.label} filter`}>
                   <XIcon className="size-3" />
                 </button>
               </span>
@@ -142,10 +140,10 @@ export function FilterChips({ filters, onChange, pendingFilters, onPendingChange
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          {slots.map((slot) => slot.activeChip && (
+          {mobileActiveSlots.map((slot) => (
             <span key={`a-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
               {slot.activeChip.label}
-              <button type="button" onClick={() => onChange(slot.activeChip!.clear)} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={`Remove ${slot.activeChip.label} filter`}>
+              <button type="button" onClick={() => onChange(slot.activeChip.clear)} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={`Remove ${slot.activeChip.label} filter`}>
                 <XIcon className="size-3" />
               </button>
             </span>
@@ -168,18 +166,19 @@ export function FilterChips({ filters, onChange, pendingFilters, onPendingChange
           {/* Pending row */}
           {hasPendingChanges && (
             <>
-              {slots.map((slot) =>
-                slot.pendingChip ? (
+              {slots.map((slot) => {
+                const pendingChip = slot.pendingChip
+                return pendingChip ? (
                   <span key={`p-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                    {slot.pendingChip.label}
-                    <button type="button" onClick={() => onPendingChange(slot.pendingChip!.clear as FilterParamsBody)} className="rounded-full p-0.5 hover:bg-primary/20" aria-label={`Remove pending ${slot.pendingChip.label} filter`}>
+                    {pendingChip.label}
+                    <button type="button" onClick={() => onPendingChange(pendingChip.clear as FilterParamsBody)} className="rounded-full p-0.5 hover:bg-primary/20" aria-label={`Remove pending ${pendingChip.label} filter`}>
                       <XIcon className="size-3" />
                     </button>
                   </span>
                 ) : (
                   <span key={`p-${slot.key}`} className="text-xs italic text-muted-foreground">{slot.defaultLabel}</span>
                 )
-              )}
+              })}
               <div className="flex justify-end gap-2">
                 <Button size="sm" className="h-6 px-2 text-xs" onClick={onApply}>Apply filters</Button>
                 <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscard}>Discard</Button>
@@ -188,18 +187,19 @@ export function FilterChips({ filters, onChange, pendingFilters, onPendingChange
           )}
 
           {/* Active row */}
-          {slots.map((slot) =>
-            slot.activeChip ? (
+          {slots.map((slot) => {
+            const activeChip = slot.activeChip
+            return activeChip ? (
               <span key={`a-${slot.key}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-                {slot.activeChip.label}
-                <button type="button" onClick={() => onChange(slot.activeChip!.clear)} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={`Remove ${slot.activeChip.label} filter`}>
+                {activeChip.label}
+                <button type="button" onClick={() => onChange(activeChip.clear)} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={`Remove ${activeChip.label} filter`}>
                   <XIcon className="size-3" />
                 </button>
               </span>
             ) : (
               <span key={`a-${slot.key}`} className="text-xs italic text-muted-foreground">{slot.defaultLabel}</span>
             )
-          )}
+          })}
           <div className="flex justify-end gap-2">
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onPendingChange({})}>Clear all</Button>
