@@ -57,9 +57,13 @@ export default function Home() {
     setHasPendingChanges(false)
   }
 
-  function handleSortChange(field: SortField, direction: SortDirection) {
-    setSortBy(field)
-    setSortDirection(direction)
+  function updateSortBy(field: SortField) {
+    if (field === sortBy) {
+      setSortDirection(direction => direction === "desc" ? "asc" : "desc")
+    } else {
+      setSortBy(field)
+      setSortDirection("desc")
+    }
   }
 
   function discardPendingFilters() {
@@ -120,7 +124,7 @@ export default function Home() {
             loading={loading}
             sortBy={sortBy}
             sortDirection={sortDirection}
-            onSortChange={handleSortChange}
+            onUpdateSortBy={updateSortBy}
           />
         </main>
       </div>

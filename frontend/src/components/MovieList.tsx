@@ -7,10 +7,10 @@ interface MovieListProps {
   loading: boolean
   sortBy: SortField
   sortDirection: SortDirection
-  onSortChange: (field: SortField, direction: SortDirection) => void
+  onUpdateSortBy: (field: SortField) => void
 }
 
-export function MovieList({ movies, loading, sortBy, sortDirection, onSortChange }: MovieListProps) {
+export function MovieList({ movies, loading, sortBy, sortDirection, onUpdateSortBy }: MovieListProps) {
   if (loading) {
     return <p className="text-muted-foreground text-sm py-4">Loading…</p>
   }
@@ -23,13 +23,6 @@ export function MovieList({ movies, loading, sortBy, sortDirection, onSortChange
     )
   }
 
-  function handleColumnHeaderClick(field: SortField) {
-    const newDirection = field === sortBy
-      ? (sortDirection === "asc" ? "desc" : "asc")
-      : "desc"
-    onSortChange(field, newDirection)
-  }
-
   return (
     <div className="text-sm">
       <div className="flex items-center gap-3 pb-2 border-b border-border">
@@ -38,25 +31,25 @@ export function MovieList({ movies, loading, sortBy, sortDirection, onSortChange
         <SortableColumnHeader
           field="start_year"
           label="Year"
-          currentSortBy={sortBy}
-          currentSortDirection={sortDirection}
-          onClick={handleColumnHeaderClick}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onUpdateSortBy={onUpdateSortBy}
           className="w-12 shrink-0"
         />
         <SortableColumnHeader
           field="average_rating"
           label="Rating"
-          currentSortBy={sortBy}
-          currentSortDirection={sortDirection}
-          onClick={handleColumnHeaderClick}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onUpdateSortBy={onUpdateSortBy}
           className="w-14 shrink-0"
         />
         <SortableColumnHeader
           field="num_votes"
           label="Votes"
-          currentSortBy={sortBy}
-          currentSortDirection={sortDirection}
-          onClick={handleColumnHeaderClick}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onUpdateSortBy={onUpdateSortBy}
           className="w-14 shrink-0"
         />
       </div>

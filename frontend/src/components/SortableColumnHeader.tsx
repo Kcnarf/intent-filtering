@@ -6,28 +6,28 @@ import type { SortDirection, SortField } from "@/lib/types"
 interface SortableColumnHeaderProps {
   field: SortField
   label: string
-  currentSortBy: SortField
-  currentSortDirection: SortDirection
-  onClick: (field: SortField) => void
+  sortBy: SortField
+  sortDirection: SortDirection
+  onUpdateSortBy: (field: SortField) => void
   className?: string
 }
 
 export function SortableColumnHeader({
   field,
   label,
-  currentSortBy,
-  currentSortDirection,
-  onClick,
+  sortBy,
+  sortDirection,
+  onUpdateSortBy,
   className,
 }: SortableColumnHeaderProps) {
-  const isActive = field === currentSortBy
+  const isActive = field === sortBy
   const SortIcon = isActive
-    ? currentSortDirection === "asc" ? ArrowUp : ArrowDown
+    ? sortDirection === "asc" ? ArrowUp : ArrowDown
     : ArrowUpDown
 
   return (
     <button
-      onClick={() => onClick(field)}
+      onClick={() => onUpdateSortBy(field)}
       className={cn(
         "flex items-center justify-end gap-1 text-xs font-medium hover:text-foreground",
         isActive ? "text-foreground" : "text-muted-foreground",
