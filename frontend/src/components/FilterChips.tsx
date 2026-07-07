@@ -15,12 +15,12 @@ import { FilterPanel } from "./FilterPanel"
 
 interface ActiveChip {
   label: string
-  clear: FilterParams
+  clear: Partial<FilterParamsBody>
 }
 
 interface PendingChip {
   label: string
-  clear: FilterParamsBody
+  clear: Partial<FilterParamsBody>
 }
 
 interface GridSlot {
@@ -59,7 +59,7 @@ function FilterChip({ label, onRemove, variant, ariaLabel }: FilterChipProps) {
   )
 }
 
-function yearLabel(filters: FilterParams): string {
+function yearLabel(filters: FilterParamsBody): string {
   if (filters.year_min && filters.year_max) return `${filters.year_min}–${filters.year_max}`
   if (filters.year_min) return `From ${filters.year_min}`
   if (filters.year_max) return `Until ${filters.year_max}`
@@ -73,40 +73,40 @@ function buildGridSlots(active: FilterParams, pending: FilterParamsBody): GridSl
   const pOr = pending.genres_or?.length ? pending.genres_or : null
   if (aOr || pOr) slots.push({
     key: "genres_or", defaultLabel: "All genres",
-    activeChip:  aOr ? { label: aOr.join(" or "),  clear: { ...active,   genres_or: undefined } } : null,
-    pendingChip: pOr ? { label: pOr.join(" or "),  clear: { ...pending,  genres_or: undefined } } : null,
+    activeChip:  aOr ? { label: aOr.join(" or "),  clear: { genres_or: undefined } } : null,
+    pendingChip: pOr ? { label: pOr.join(" or "),  clear: { genres_or: undefined } } : null,
   })
 
   const aAnd = active.genres_and?.length ? active.genres_and : null
   const pAnd = pending.genres_and?.length ? pending.genres_and : null
   if (aAnd || pAnd) slots.push({
     key: "genres_and", defaultLabel: "All genres",
-    activeChip:  aAnd ? { label: aAnd.join(" + "), clear: { ...active,   genres_and: undefined } } : null,
-    pendingChip: pAnd ? { label: pAnd.join(" + "), clear: { ...pending,  genres_and: undefined } } : null,
+    activeChip:  aAnd ? { label: aAnd.join(" + "), clear: { genres_and: undefined } } : null,
+    pendingChip: pAnd ? { label: pAnd.join(" + "), clear: { genres_and: undefined } } : null,
   })
 
   const aYear = active.year_min || active.year_max
   const pYear = pending.year_min || pending.year_max
   if (aYear || pYear) slots.push({
     key: "year", defaultLabel: "Any year",
-    activeChip:  aYear ? { label: yearLabel(active),   clear: { ...active,  year_min: undefined, year_max: undefined } } : null,
-    pendingChip: pYear ? { label: yearLabel(pending),  clear: { ...pending, year_min: undefined, year_max: undefined } } : null,
+    activeChip:  aYear ? { label: yearLabel(active),  clear: { year_min: undefined, year_max: undefined } } : null,
+    pendingChip: pYear ? { label: yearLabel(pending), clear: { year_min: undefined, year_max: undefined } } : null,
   })
 
   const aRating = active.rating_min ?? null
   const pRating = pending.rating_min ?? null
   if (aRating || pRating) slots.push({
     key: "rating_min", defaultLabel: "Any rating",
-    activeChip:  aRating ? { label: `Rating ≥ ${aRating.toFixed(1)}`, clear: { ...active,  rating_min: undefined } } : null,
-    pendingChip: pRating ? { label: `Rating ≥ ${pRating.toFixed(1)}`, clear: { ...pending, rating_min: undefined } } : null,
+    activeChip:  aRating ? { label: `Rating ≥ ${aRating.toFixed(1)}`, clear: { rating_min: undefined } } : null,
+    pendingChip: pRating ? { label: `Rating ≥ ${pRating.toFixed(1)}`, clear: { rating_min: undefined } } : null,
   })
 
   const aVotes = active.votes_min ?? null
   const pVotes = pending.votes_min ?? null
   if (aVotes || pVotes) slots.push({
     key: "votes_min", defaultLabel: "Any votes",
-    activeChip:  aVotes ? { label: `Votes ≥ ${formatVotes(aVotes)}`, clear: { ...active,  votes_min: undefined } } : null,
-    pendingChip: pVotes ? { label: `Votes ≥ ${formatVotes(pVotes)}`, clear: { ...pending, votes_min: undefined } } : null,
+    activeChip:  aVotes ? { label: `Votes ≥ ${formatVotes(aVotes)}`, clear: { votes_min: undefined } } : null,
+    pendingChip: pVotes ? { label: `Votes ≥ ${formatVotes(pVotes)}`, clear: { votes_min: undefined } } : null,
   })
 
   return slots
@@ -114,15 +114,15 @@ function buildGridSlots(active: FilterParams, pending: FilterParamsBody): GridSl
 
 interface FilterChipsProps {
   filters: FilterParams
-  onChange: (filters: FilterParams) => void
   pendingFilters: FilterParamsBody
-  onPendingChange: (filters: FilterParamsBody) => void
+  onPendingChange: (delta: Partial<FilterParamsBody>) => void
+  onClearAll: () => void
   onApply: () => void
   onDiscard: () => void
   hasPendingChanges: boolean
 }
 
-export function FilterChips({ filters, onChange, pendingFilters, onPendingChange, onApply, onDiscard, hasPendingChanges }: FilterChipsProps) {
+export function FilterChips({ filters, pendingFilters, onPendingChange, onClearAll, onApply, onDiscard, hasPendingChanges }: FilterChipsProps) {
   const slots = buildGridSlots(filters, pendingFilters)
   const hasActiveFilters  = slots.some((slot) => slot.activeChip  !== null)
   const hasPendingFilters = slots.some((slot) => slot.pendingChip !== null)
@@ -177,14 +177,14 @@ export function FilterChips({ filters, onChange, pendingFilters, onPendingChange
             <FilterChip
               key={`a-${slot.key}`}
               label={slot.activeChip.label}
-              onRemove={() => onChange(slot.activeChip.clear)}
+              onRemove={() => onPendingChange(slot.activeChip.clear)}
               variant="active"
               ariaLabel={`Remove ${slot.activeChip.label} filter`}
             />
           ))}
           <div className="ml-auto flex items-center gap-2">
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onPendingChange({})}>Clear all</Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onClearAll}>Clear all</Button>
             )}
             {!hasPendingChanges && filtersSheet}
           </div>
@@ -228,7 +228,7 @@ export function FilterChips({ filters, onChange, pendingFilters, onPendingChange
               <FilterChip
                 key={`a-${slot.key}`}
                 label={activeChip.label}
-                onRemove={() => onChange(activeChip.clear)}
+                onRemove={() => onPendingChange(activeChip.clear)}
                 variant="active"
                 ariaLabel={`Remove ${activeChip.label} filter`}
               />
@@ -238,7 +238,7 @@ export function FilterChips({ filters, onChange, pendingFilters, onPendingChange
           })}
           <div className="flex justify-end gap-2">
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onPendingChange({})}>Clear all</Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onClearAll}>Clear all</Button>
             )}
           </div>
         </div>

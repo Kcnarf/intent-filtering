@@ -35,8 +35,8 @@ export default function Home() {
       .finally(() => setLoading(false))
   }, [activeFilters, sortBy, sortDirection])
 
-  function updatePending(filters: FilterParamsBody) {
-    setPendingFilters(filters)
+  function updatePending(delta: Partial<FilterParamsBody>) {
+    setPendingFilters(prev => ({ ...prev, ...delta }))
     setPendingDirty(true)
   }
 
@@ -55,9 +55,9 @@ export default function Home() {
     setPendingDirty(false)
   }
 
-  function handleActiveChipRemove(updated: FilterParams) {
-    const { limit: _limit, offset: _offset, ...filtersBody } = updated
-    updatePending(filtersBody)
+  function clearAll() {
+    setPendingFilters({})
+    setPendingDirty(true)
   }
 
   const totalCountDisplay = loading ? "…" : (stat?.total_count.toLocaleString() ?? "—")
@@ -86,9 +86,9 @@ export default function Home() {
 
           <FilterChips
             filters={activeFilters}
-            onChange={handleActiveChipRemove}
             pendingFilters={pendingFilters}
             onPendingChange={updatePending}
+            onClearAll={clearAll}
             onApply={applyPending}
             onDiscard={discardPending}
             hasPendingChanges={pendingDirty}
