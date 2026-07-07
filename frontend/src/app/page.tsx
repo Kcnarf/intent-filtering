@@ -11,10 +11,20 @@ import { IntentInput } from "@/components/IntentInput"
 import { MiniScoreBars } from "@/components/MiniScoreBars"
 import { MovieList } from "@/components/MovieList"
 
+function computeHasPendingFilters(pFilters: FilterParamsBody, aFilters: FilterParamsBody): boolean {
+  const equality = new Set(aFilters.genres_or).symmetricDifference(new Set(pFilters.genres_or)).size === 0 &&
+         new Set(pFilters.genres_and).symmetricDifference(new Set(aFilters.genres_and)).size === 0 &&
+         pFilters.year_min === aFilters.year_min &&
+         pFilters.year_max === aFilters.year_max &&
+         pFilters.rating_min === aFilters.rating_min &&
+         pFilters.votes_min === aFilters.votes_min
+  return !equality
+}
+
 export default function Home() {
   const [activeFilters, setActiveFilters] = useState<FilterParams>({})
   const [pendingFilters, setPendingFilters] = useState<FilterParamsBody>({})
-  const [pendingDirty, setPendingDirty] = useState(false)
+  const [hasPendingChanges, setHasPendingChanges] = useState(false)
   const [stat, setStat] = useState<MoviesStatOut | null>(null)
   const [movies, setMovies] = useState<MovieOut[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,27 +32,28 @@ export default function Home() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
 
   const { limit: _limit, offset: _offset, ...activeFiltersBody } = activeFilters
-  const displayFilters: FilterParamsBody = pendingDirty ? pendingFilters : activeFiltersBody
+  const displayFilters: FilterParamsBody = hasPendingChanges ? pendingFilters : activeFiltersBody
 
   useEffect(() => {
     setLoading(true)
     const movieParams: FilterParams = { ...activeFilters, sort_by: sortBy, sort_direction: sortDirection }
     Promise.all([fetchMoviesStat(activeFilters), fetchMovies(movieParams)])
-      .then(([moviesStat, fetchedMovies]) => {
-        setStat(moviesStat)
+      .then(([fetchedMoviesStat, fetchedMovies]) => {
+        setStat(fetchedMoviesStat)
         setMovies(fetchedMovies)
       })
       .finally(() => setLoading(false))
   }, [activeFilters, sortBy, sortDirection])
 
   function updatePending(delta: Partial<FilterParamsBody>) {
-    setPendingFilters(prev => ({ ...prev, ...delta }))
-    setPendingDirty(true)
+    const newPending = { ...pendingFilters, ...delta }
+    setPendingFilters(newPending)
+    setHasPendingChanges(computeHasPendingFilters(newPending, activeFiltersBody))
   }
 
-  function applyPending() {
+  function applyPendingFilters() {
     setActiveFilters({ ...pendingFilters })
-    setPendingDirty(false)
+    setHasPendingChanges(false)
   }
 
   function handleSortChange(field: SortField, direction: SortDirection) {
@@ -50,14 +61,15 @@ export default function Home() {
     setSortDirection(direction)
   }
 
-  function discardPending() {
+  function discardPendingFilters() {
     setPendingFilters(activeFiltersBody)
-    setPendingDirty(false)
+    setHasPendingChanges(false)
   }
 
   function clearAll() {
-    setPendingFilters({})
-    setPendingDirty(true)
+    const newPending: FilterParamsBody = {}
+    setPendingFilters(newPending)
+    setHasPendingChanges(computeHasPendingFilters(newPending, activeFiltersBody))
   }
 
   const totalCountDisplay = loading ? "…" : (stat?.total_count.toLocaleString() ?? "—")
@@ -85,13 +97,13 @@ export default function Home() {
           </div>
 
           <FilterChips
-            filters={activeFilters}
+            activeFilters={activeFilters}
             pendingFilters={pendingFilters}
+            hasPendingChanges={hasPendingChanges}
             onPendingChange={updatePending}
             onClearAll={clearAll}
-            onApply={applyPending}
-            onDiscard={discardPending}
-            hasPendingChanges={pendingDirty}
+            onApplyPendingFilters={applyPendingFilters}
+            onDiscardPendingFilters={discardPendingFilters}
           />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

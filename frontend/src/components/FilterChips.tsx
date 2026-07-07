@@ -113,17 +113,17 @@ function buildGridSlots(active: FilterParams, pending: FilterParamsBody): GridSl
 }
 
 interface FilterChipsProps {
-  filters: FilterParams
+  activeFilters: FilterParams
   pendingFilters: FilterParamsBody
+  hasPendingChanges: boolean
   onPendingChange: (delta: Partial<FilterParamsBody>) => void
   onClearAll: () => void
-  onApply: () => void
-  onDiscard: () => void
-  hasPendingChanges: boolean
+  onApplyPendingFilters: () => void
+  onDiscardPendingFilters: () => void
 }
 
-export function FilterChips({ filters, pendingFilters, onPendingChange, onClearAll, onApply, onDiscard, hasPendingChanges }: FilterChipsProps) {
-  const slots = buildGridSlots(filters, pendingFilters)
+export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, onPendingChange, onClearAll, onApplyPendingFilters, onDiscardPendingFilters }: FilterChipsProps) {
+  const slots = buildGridSlots(activeFilters, pendingFilters)
   const hasActiveFilters  = slots.some((slot) => slot.activeChip  !== null)
   const hasPendingFilters = slots.some((slot) => slot.pendingChip !== null)
 
@@ -165,8 +165,8 @@ export function FilterChips({ filters, pendingFilters, onPendingChange, onClearA
               />
             ))}
             <div className="ml-auto flex items-center gap-2">
-              <Button size="sm" className="h-6 px-2 text-xs" onClick={onApply}>Apply filters</Button>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscard}>Discard</Button>
+              <Button size="sm" className="h-6 px-2 text-xs" onClick={onApplyPendingFilters}>Apply filters</Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscardPendingFilters}>Discard</Button>
               {filtersSheet}
             </div>
           </div>
@@ -215,8 +215,8 @@ export function FilterChips({ filters, pendingFilters, onPendingChange, onClearA
                 )
               })}
               <div className="flex justify-end gap-2">
-                <Button size="sm" className="h-6 px-2 text-xs" onClick={onApply}>Apply filters</Button>
-                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscard}>Discard</Button>
+                <Button size="sm" className="h-6 px-2 text-xs" onClick={onApplyPendingFilters}>Apply filters</Button>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscardPendingFilters}>Discard</Button>
               </div>
             </>
           )}

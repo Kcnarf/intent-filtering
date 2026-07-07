@@ -11,7 +11,7 @@
 - Intent textarea: Enter key submits, Shift+Enter inserts newline, text is NOT cleared after submit
 - LLM receives pending filter state as context; falls back to active state when no pending changes exist
 - No backend changes needed (`fetchIntent` already accepts `currentFilters: FilterParamsBody`)
-- `pendingDirty: boolean` flag tracks whether pending differs from active (avoids deep object comparison)
+- `hasPendingFilters: boolean` flag tracks whether pending differs from active (avoids deep object comparison)
 
 ## Path
 
@@ -31,16 +31,16 @@ No backend changes.
 **Files**: `frontend/src/app/page.tsx`, `frontend/src/components/FilterPanel.tsx`
 
 **`page.tsx`**
-- Add `const [pendingDirty, setPendingDirty] = useState(false)`
-- Compute `const { limit: _l, offset: _o, ...activeFiltersBody } = activeFilters` and `const displayFilters = pendingDirty ? pendingFilters : activeFiltersBody`
-- Add `updatePending(f: FilterParamsBody)` → `setPendingFilters(f)` + `setPendingDirty(true)`
-- Add `applyPending()` → `setActiveFilters({...pendingFilters})` + `setPendingDirty(false)`
-- Add `discardPending()` → `setPendingFilters(activeFiltersBody)` + `setPendingDirty(false)`
-- Replace `handleApply` with `applyPending`
+- Add `const [hasPendingFilters, setHasPendingFilters] = useState(false)`
+- Compute `const { limit: _l, offset: _o, ...activeFiltersBody } = activeFilters` and `const displayFilters = hasPendingFilters ? pendingFilters : activeFiltersBody`
+- Add `updatePending(f: FilterParamsBody)` → `setPendingFilters(f)` + `setHasPendingFilters(true)`
+- Add `applyPendingFilters()` → `setActiveFilters({...pendingFilters})` + `setHasPendingFilters(false)`
+- Add `discardPendingFilters()` → `setPendingFilters(activeFiltersBody)` + `setHasPendingFilters(false)`
+- Replace `handleApply` with `applyPendingFilters`
 - Replace `handleChipRemove` with `handleActiveChipRemove(updated: FilterParams)`: strips limit/offset, calls `updatePending(body)` — no longer touches `activeFilters` directly
 - Pass `displayFilters` (not `pendingFilters`) to `FilterPanel` and `IntentInput`
 - Replace all `onPendingChange={setPendingFilters}` with `onPendingChange={updatePending}`
-- Pass `hasPendingChanges={pendingDirty}`, `onApply={applyPending}`, `onDiscard={discardPending}` to `FilterChips`
+- Pass `hasPendingChanges={hasPendingFilters}`, `onApply={applyPendingFilters}`, `onDiscard={discardPendingFilters}` to `FilterChips`
 - Remove `onApply` from `FilterPanel` props
 
 **`FilterPanel.tsx`**
@@ -68,7 +68,7 @@ No backend changes.
 
 ## TODO list
 
-- [x] **A1** — `page.tsx`: add `pendingDirty` state, helpers (`updatePending`, `applyPending`, `discardPending`), `displayFilters`, updated handlers and prop passing
+- [x] **A1** — `page.tsx`: add `hasPendingFilters` state, helpers (`updatePending`, `applyPendingFilters`, `discardPendingFilters`), `displayFilters`, updated handlers and prop passing
 - [x] **A2** — `FilterPanel.tsx`: remove `onApply` prop + Apply button
 - [x] **B1** — `IntentInput.tsx`: rename prop, Enter key submit, remove Apply intent button
 - [x] **B2** — `FilterChips.tsx`: pending chips row above active row, Discard button, update Clear all
