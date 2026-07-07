@@ -12,6 +12,7 @@ import {
 import type { FilterParamsBody } from "@/lib/types"
 import { cn, formatVotes } from "@/lib/utils"
 import { FilterPanel } from "./FilterPanel"
+import { IntentInput } from "./IntentInput"
 
 interface ActiveChip {
   label: string
@@ -138,6 +139,9 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
         <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
+        <div className="p-4 pt-2">
+          <IntentInput contextFilters={pendingFilters} onPendingChange={onPendingChange} />
+        </div>
         <div className="p-4 pt-2">
           <FilterPanel filters={pendingFilters} onPendingChange={onPendingChange} />
         </div>

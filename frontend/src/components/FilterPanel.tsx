@@ -67,7 +67,7 @@ function formatVotesLabel(votes: number | undefined): string {
 
 interface FilterPanelProps {
   filters: FilterParamsBody
-  onPendingChange: (filters: FilterParamsBody) => void
+  onPendingChange: (delta: Partial<FilterParamsBody>) => void
 }
 
 export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
@@ -95,7 +95,7 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
         <GenreMultiSelect
           selected={filters.genres_or ?? []}
           onChange={(genres) =>
-            onPendingChange({ ...filters, genres_or: genres.length ? genres : undefined })
+            onPendingChange({ genres_or: genres.length ? genres : undefined })
           }
         />
       </div>
@@ -106,7 +106,7 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
         <GenreMultiSelect
           selected={filters.genres_and ?? []}
           onChange={(genres) =>
-            onPendingChange({ ...filters, genres_and: genres.length ? genres : undefined })
+            onPendingChange({ genres_and: genres.length ? genres : undefined })
           }
         />
       </div>
@@ -129,7 +129,6 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
             const [lo, hi] = vals as [number, number]
             setDragYear(null)
             onPendingChange({
-              ...filters,
               year_min: lo > YEAR_MIN ? lo : undefined,
               year_max: hi < YEAR_MAX ? hi : undefined,
             })
@@ -155,7 +154,7 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
           onValueCommitted={(vals) => {
             const val = extractSliderSingleValue(vals)
             setDragRating(null)
-            onPendingChange({ ...filters, rating_min: val > RATING_MIN ? val : undefined })
+            onPendingChange({ rating_min: val > RATING_MIN ? val : undefined })
           }}
         />
       </div>
@@ -181,7 +180,7 @@ export function FilterPanel({ filters, onPendingChange }: FilterPanelProps) {
               const rounded = Math.round(pos)
               const snapped = Math.abs(pos - rounded) <= VOTES_SNAP_ZONE ? rounded : pos
               setDragVotesPos(null)
-              onPendingChange({ ...filters, votes_min: posToVotes(snapped) })
+              onPendingChange({ votes_min: posToVotes(snapped) })
             }}
           />
           <div className="mx-[6px]">

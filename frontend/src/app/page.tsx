@@ -11,6 +11,8 @@ import { IntentInput } from "@/components/IntentInput"
 import { MiniScoreBars } from "@/components/MiniScoreBars"
 import { MovieList } from "@/components/MovieList"
 
+const DEFAULT_SORT_DIRECTION = "desc"
+
 function computeHasPendingFilters(pFilters: FilterParamsBody, aFilters: FilterParamsBody): boolean {
   const equality = new Set(aFilters.genres_or).symmetricDifference(new Set(pFilters.genres_or)).size === 0 &&
          new Set(pFilters.genres_and).symmetricDifference(new Set(aFilters.genres_and)).size === 0 &&
@@ -32,8 +34,6 @@ export default function Home() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [limit, setLimit] = useState<number | undefined>(undefined)
   const [offset, setOffset] = useState<number>(0)
-
-  const displayFilters: FilterParamsBody = hasPendingChanges ? pendingFilters : activeFilters
 
   useEffect(() => {
     setLoading(true)
@@ -62,7 +62,7 @@ export default function Home() {
       setSortDirection(direction => direction === "desc" ? "asc" : "desc")
     } else {
       setSortBy(field)
-      setSortDirection("desc")
+      setSortDirection(DEFAULT_SORT_DIRECTION)
     }
   }
 
@@ -72,9 +72,9 @@ export default function Home() {
   }
 
   function clearAll() {
-    const newPendingFilters: FilterParamsBody = {}
-    setPendingFilters(newPendingFilters)
-    setHasPendingChanges(computeHasPendingFilters(newPendingFilters, activeFilters))
+    const emptyPendingFilters: FilterParamsBody = {}
+    setPendingFilters(emptyPendingFilters)
+    setHasPendingChanges(computeHasPendingFilters(emptyPendingFilters, activeFilters))
   }
 
   const totalCountDisplay = loading ? "…" : (stat?.total_count.toLocaleString() ?? "—")
@@ -91,16 +91,11 @@ export default function Home() {
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Sidebar — desktop only */}
         <aside className="hidden w-72 shrink-0 flex-col gap-6 border-r p-6 lg:flex">
-          <IntentInput contextFilters={displayFilters} onPendingChange={updatePending} />
-          <FilterPanel filters={displayFilters} onPendingChange={updatePending} />
+          <IntentInput contextFilters={pendingFilters} onPendingChange={updatePending} />
+          <FilterPanel filters={pendingFilters} onPendingChange={updatePending} />
         </aside>
 
         <main className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-          {/* IntentInput — mobile only */}
-          <div className="lg:hidden">
-            <IntentInput contextFilters={displayFilters} onPendingChange={updatePending} />
-          </div>
-
           <FilterChips
             activeFilters={activeFilters}
             pendingFilters={pendingFilters}
