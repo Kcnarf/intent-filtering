@@ -24,7 +24,7 @@ When starting a new session, or when the user asks to implement a new feature or
       1.5. based on the approved path, plan the updates; this step defines **how** changes should be implemented
       1.6. wait for human approval of the plan
     2. PERSIST
-      **before any file edit**: persist the plan to `plans/plan-<intent>.md`, where `<intent>` is a short kebab-case label for the feature or task (e.g. `plans/plan-add-auth.md`, `plans/plan-refactor-api.md`, `plans/plan-<issue_number>.md`). The file must include the following four sections **in this order**, mirroring the workflow's REASON steps that produced them:
+      **before any file edit**: persist the plan to `plans/plan-<YYYY-MM-DD_HHMM>-<intent>.md`, where `<YYYY-MM-DD_HHMM>` is the creation timestamp and `<intent>` is a short kebab-case label for the feature or task (e.g. `plans/plan-2026-07-07_1430-add-auth.md`, `plans/plan-2026-07-05_0945-refactor-api.md`). The timestamp makes plan files a journal/history, sortable and easily referenced. The file must include the following four sections **in this order**, mirroring the workflow's REASON steps that produced them:
         - `## Design decisions` — key choices agreed in steps 1.1–1.2 (architecture, libraries, trade-offs)
         - `## Path` — system-level description of what changes, agreed in steps 1.3–1.4
         - `## Plan` — detailed file/function-level breakdown from steps 1.5–1.6
@@ -40,6 +40,14 @@ When starting a new session, or when the user asks to implement a new feature or
     - **Code-first**: Change code → wait for human approval → run tests → surface failures to human → propose test updates → wait for human approval → apply test fixes
   - **For multi-file changes**: If a task requires changes to more than 3 source files, stop and break it into smaller tasks first.
   - **Commits**: Never commit changes; the project maintainer handles this.
+
+## Plans Directory
+
+The `./plans/` directory is a journal/history of big updates and feature work. Each plan file is timestamped with its creation date (`YYYY-MM-DD_HHMM` format), making them sortable and easy to reference across sessions:
+- `plans/plan-2026-07-07_1430-add-auth.md` — created July 7, 2026 at 2:30 PM
+- `plans/plan-2026-07-05_0945-refactor-api.md` — created July 5, 2026 at 9:45 AM
+
+Read the `## Path` and `## TODO list` sections of any plan file to resume work from a previous session.
 
 ## Conventions
 
