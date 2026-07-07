@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import type { FilterParams, FilterParamsBody } from "@/lib/types"
+import type { FilterParamsBody } from "@/lib/types"
 import { cn, formatVotes } from "@/lib/utils"
 import { FilterPanel } from "./FilterPanel"
 
@@ -66,43 +66,43 @@ function yearLabel(filters: FilterParamsBody): string {
   return ""
 }
 
-function buildGridSlots(active: FilterParams, pending: FilterParamsBody): GridSlot[] {
+function buildGridSlots(activeFilters: FilterParamsBody, pendingFilters: FilterParamsBody): GridSlot[] {
   const slots: GridSlot[] = []
 
-  const aOr = active.genres_or?.length ? active.genres_or : null
-  const pOr = pending.genres_or?.length ? pending.genres_or : null
+  const aOr = activeFilters.genres_or?.length ? activeFilters.genres_or : null
+  const pOr = pendingFilters.genres_or?.length ? pendingFilters.genres_or : null
   if (aOr || pOr) slots.push({
     key: "genres_or", defaultLabel: "All genres",
     activeChip:  aOr ? { label: aOr.join(" or "),  clear: { genres_or: undefined } } : null,
     pendingChip: pOr ? { label: pOr.join(" or "),  clear: { genres_or: undefined } } : null,
   })
 
-  const aAnd = active.genres_and?.length ? active.genres_and : null
-  const pAnd = pending.genres_and?.length ? pending.genres_and : null
+  const aAnd = activeFilters.genres_and?.length ? activeFilters.genres_and : null
+  const pAnd = pendingFilters.genres_and?.length ? pendingFilters.genres_and : null
   if (aAnd || pAnd) slots.push({
     key: "genres_and", defaultLabel: "All genres",
     activeChip:  aAnd ? { label: aAnd.join(" + "), clear: { genres_and: undefined } } : null,
     pendingChip: pAnd ? { label: pAnd.join(" + "), clear: { genres_and: undefined } } : null,
   })
 
-  const aYear = active.year_min || active.year_max
-  const pYear = pending.year_min || pending.year_max
+  const aYear = activeFilters.year_min || activeFilters.year_max
+  const pYear = pendingFilters.year_min || pendingFilters.year_max
   if (aYear || pYear) slots.push({
     key: "year", defaultLabel: "Any year",
-    activeChip:  aYear ? { label: yearLabel(active),  clear: { year_min: undefined, year_max: undefined } } : null,
-    pendingChip: pYear ? { label: yearLabel(pending), clear: { year_min: undefined, year_max: undefined } } : null,
+    activeChip:  aYear ? { label: yearLabel(activeFilters),  clear: { year_min: undefined, year_max: undefined } } : null,
+    pendingChip: pYear ? { label: yearLabel(pendingFilters), clear: { year_min: undefined, year_max: undefined } } : null,
   })
 
-  const aRating = active.rating_min ?? null
-  const pRating = pending.rating_min ?? null
+  const aRating = activeFilters.rating_min ?? null
+  const pRating = pendingFilters.rating_min ?? null
   if (aRating || pRating) slots.push({
     key: "rating_min", defaultLabel: "Any rating",
     activeChip:  aRating ? { label: `Rating ≥ ${aRating.toFixed(1)}`, clear: { rating_min: undefined } } : null,
     pendingChip: pRating ? { label: `Rating ≥ ${pRating.toFixed(1)}`, clear: { rating_min: undefined } } : null,
   })
 
-  const aVotes = active.votes_min ?? null
-  const pVotes = pending.votes_min ?? null
+  const aVotes = activeFilters.votes_min ?? null
+  const pVotes = pendingFilters.votes_min ?? null
   if (aVotes || pVotes) slots.push({
     key: "votes_min", defaultLabel: "Any votes",
     activeChip:  aVotes ? { label: `Votes ≥ ${formatVotes(aVotes)}`, clear: { votes_min: undefined } } : null,
@@ -113,7 +113,7 @@ function buildGridSlots(active: FilterParams, pending: FilterParamsBody): GridSl
 }
 
 interface FilterChipsProps {
-  activeFilters: FilterParams
+  activeFilters: FilterParamsBody
   pendingFilters: FilterParamsBody
   hasPendingChanges: boolean
   onPendingChange: (delta: Partial<FilterParamsBody>) => void

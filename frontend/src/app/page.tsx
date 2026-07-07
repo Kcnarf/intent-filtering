@@ -22,7 +22,7 @@ function computeHasPendingFilters(pFilters: FilterParamsBody, aFilters: FilterPa
 }
 
 export default function Home() {
-  const [activeFilters, setActiveFilters] = useState<FilterParams>({})
+  const [activeFilters, setActiveFilters] = useState<FilterParamsBody>({})
   const [pendingFilters, setPendingFilters] = useState<FilterParamsBody>({})
   const [hasPendingChanges, setHasPendingChanges] = useState(false)
   const [stat, setStat] = useState<MoviesStatOut | null>(null)
@@ -30,25 +30,26 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<SortField>("average_rating")
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
+  const [limit, setLimit] = useState<number | undefined>(undefined)
+  const [offset, setOffset] = useState<number>(0)
 
-  const { limit: _limit, offset: _offset, ...activeFiltersBody } = activeFilters
-  const displayFilters: FilterParamsBody = hasPendingChanges ? pendingFilters : activeFiltersBody
+  const displayFilters: FilterParamsBody = hasPendingChanges ? pendingFilters : activeFilters
 
   useEffect(() => {
     setLoading(true)
-    const movieParams: FilterParams = { ...activeFilters, sort_by: sortBy, sort_direction: sortDirection }
+    const movieParams: FilterParams = { ...activeFilters, sort_by: sortBy, sort_direction: sortDirection, limit, offset }
     Promise.all([fetchMoviesStat(activeFilters), fetchMovies(movieParams)])
       .then(([fetchedMoviesStat, fetchedMovies]) => {
         setStat(fetchedMoviesStat)
         setMovies(fetchedMovies)
       })
       .finally(() => setLoading(false))
-  }, [activeFilters, sortBy, sortDirection])
+  }, [activeFilters, sortBy, sortDirection, limit, offset])
 
   function updatePending(delta: Partial<FilterParamsBody>) {
     const newPending = { ...pendingFilters, ...delta }
     setPendingFilters(newPending)
-    setHasPendingChanges(computeHasPendingFilters(newPending, activeFiltersBody))
+    setHasPendingChanges(computeHasPendingFilters(newPending, activeFilters))
   }
 
   function applyPendingFilters() {
@@ -62,14 +63,14 @@ export default function Home() {
   }
 
   function discardPendingFilters() {
-    setPendingFilters(activeFiltersBody)
+    setPendingFilters(activeFilters)
     setHasPendingChanges(false)
   }
 
   function clearAll() {
-    const newPending: FilterParamsBody = {}
-    setPendingFilters(newPending)
-    setHasPendingChanges(computeHasPendingFilters(newPending, activeFiltersBody))
+    const newPendingFilters: FilterParamsBody = {}
+    setPendingFilters(newPendingFilters)
+    setHasPendingChanges(computeHasPendingFilters(newPendingFilters, activeFilters))
   }
 
   const totalCountDisplay = loading ? "…" : (stat?.total_count.toLocaleString() ?? "—")
