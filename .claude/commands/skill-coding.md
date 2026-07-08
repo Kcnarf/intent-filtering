@@ -17,18 +17,40 @@ Each section starts with anti-patterns to avoid, then lists good practices to re
 
 ### Meaningful names over abbreviations and type names
 
-No abbreviations or single-letter names outside loop counters (`i`, `idx`). Names must describe domain meaning, not type or role: `activeUsers` not `userList`, `pendingIds` not `data` or `temp`.
+No abbreviations or single-letter names. Names must describe domain meaning, not type or role: `activeUsers` not `userList`, `pendingIds` not `data` or `temp`.
+
+**Exception:** Domain-standard abbreviations like 'Id' (identifier) are acceptable. They're universally understood and appear in standard library names (`userId`, `recordId`).
 
 **Why:** A type-derived or role-less name forces the reader to trace the code to understand what the value represents.
 
 ```ts
-// ❌
+// ❌ — generic names, no meaning
 const d = getUsers()
 const arr = statuses.map(s => s.id)
 
-// ✅
+// ✅ — meaningful names; 'Id' is a domain-standard abbreviation
 const users = getUsers()
-const statusIds = statuses.map(status => status.id)
+const userIds = users.map(user => user.id)
+const userId = 123
+const userName = 'John'
+```
+
+---
+
+### Meaningful names for iterables
+
+When iterating over collections, avoid generic abbreviations like `i`, `e`, or `elem`. Use the singular form of the collection name for element variables, and postfix 'I' (capital I) to the singular name for index variables.
+
+**Why:** A meaningful name reveals what the loop variable represents without requiring the reader to trace back to the collection or loop context.
+
+```ts
+// ❌
+for (let i = 0; i < names.length; i++) { console.log(names[i]) }
+for (const elem of names) { console.log(elem) }
+
+// ✅
+for (let nameI = 0; nameI < names.length; nameI++) { console.log(names[nameI]) }
+for (const name of names) { console.log(name) }
 ```
 
 ---
@@ -295,11 +317,3 @@ import { fetchMovies } from "@/lib/api"
 const movies = await fetchMovies({ genre })
 ```
 
----
-
-## Before finishing a coding session
-
-- [ ] Lint passes with zero warnings
-- [ ] Typecheck / build passes
-- [ ] No `any`, no non-null assertions (`!`), no leftover `console.log`
-- [ ] No new duplicated logic — checked via search, not just memory

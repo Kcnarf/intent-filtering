@@ -170,11 +170,3 @@ cd api
 uv run pytest
 ```
 
----
-
-## Before finishing a testing session
-
-- [ ] All new/modified tests pass (`uv run pytest`)
-- [ ] Test descriptions follow the `should ...` format
-- [ ] Subset operation tests assert both count and exact set
-- [ ] Test data includes at least one item that should NOT appear in the result
