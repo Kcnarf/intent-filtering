@@ -143,6 +143,52 @@ let isDirty = false
 
 ---
 
+### Lifecycle ownership (aka Encapsulation / DDAU)
+
+A variable's full lifecycle — initial value, update logic, and state transitions — is owned by exactly **one** object (component, class, or module). Others may **observe** the current value and **signal intent** by calling dedicated functions, but they never compute the next state themselves.
+
+The owner exposes two kinds of APIs:
+
+- **Complex-logic handlers** (`handleVarUpdate(intent)` or domain-named equivalents like `handleSortByChange(field)`): own the state transition logic. Use when updating this variable requires computing derived values, checking invariants, or coordinating with other state.
+- **Simple setters** (`setVar(value)`): direct assignment. Use for trivial updates that need no logic — just setting a flag or storing a value directly.
+
+Both are public, owned by the owner. Callers never mutate directly or compute the next state themselves.
+
+**Why:** When multiple objects each compute a next value, the transition logic is spread across collaborators and drifts silently. Centralising all mutations in one owner — whether via handler or setter — makes the state machine clear and testable. Testing becomes straightforward: a handler tests the logic, a setter tests direct updates.
+
+> Derived state (e.g., `visibleItems = items.filter(...)`) is recomputed whenever its source changes; no handler or setter needed. Define it once, close to the source.
+
+**Signals the smell:** a collaborator computes the next value before calling the owner, or mutates a variable it does not own.
+
+```ts
+// ❌ — caller computes and mutates directly
+function onColumnClick(field: SortByField) {
+  const newDir = computeNewSortDir(field);
+  sortBy = field;   // direct mutation from outside
+  sortDir = newDir; // direct mutation from outside
+}
+
+// ✅ — owner owns complex logic via handler
+function handleSortByChange(newField: SortByField) {
+  const newDir = computeNewSortDir(newField); // logic owned here
+  sortBy = newField
+  sortDir = newDir
+}
+// ✅ — owner exposes simple updates via setter
+function setSortDir(newDir: SortByField) {
+  sortDir = newDir // simple setter for direct assignment
+}
+
+// ✅ — caller signals intent, owner decides
+function onColumnClick(field: SortByField) {
+  handleSortByChange(field) // "I want to sort by this field" — handler decides the direction
+}
+```
+
+**Applies across ecosystems:** React/Ember call this DDAU (Data Down, Actions Up); OOP languages call it encapsulation. The principle is the same: mutations live in the owner, callers send actions.
+
+---
+
 ## Project specific coding rules
 
 ---
