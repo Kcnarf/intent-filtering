@@ -211,6 +211,75 @@ function onColumnClick(field: SortByField) {
 
 ---
 
+### Early returns for preconditions
+
+When a function has preconditions — a required value, a permission check, a validation rule — apply two steps:
+
+1. **Extract** — pull every precondition check out of the happy path and place it before it, handling each failure immediately with a return or throw. Never nest the happy path inside a chain of guard `if` blocks.
+2. **Arrange** — among the extracted checks, keep independent ones flat (one `if` per check). When a check only makes sense after an earlier one passes (e.g. `user.profile.preferences` requires `user.profile` to exist first), chain or nest that part instead: flattening interdependent checks makes them *look* like unrelated rules, when they're really one connected concept.
+
+**Why:** Nested guards force the reader to hold all prior conditions in mind before reaching the actual logic — extraction (step 1) removes that burden. But collapsing every extracted check into an identical flat `if` regardless of dependency (skipping step 2) hides real structure: the reader can't tell two checks are related unless the code shows it.
+
+**Scope:** This rule applies to **guard clauses only** — checks that exist solely to reject invalid input or state. A check is a guard clause if removing it would still let the function run correctly on valid input; it exists purely to reject bad input/state. A check is algorithm logic if it produces different valid outputs depending on the branch (e.g. `if (items.length === 0) return []` is behavior, not rejection) — nested `if` blocks expressing algorithm logic or business rules are unaffected by this rule.
+
+```ts
+// ❌ Bad — neither step applied: every precondition wraps the happy path
+function greet(user: User | null) {
+  if (user) {
+    if (user.isActive) {
+      if (user.profile && user.profile.preferences) {
+        if (user.isFirstVisit) {
+          return `Welcome, ${user.name}!`
+        } else {
+          return `Hello again, ${user.name}!`
+        }
+      } else {
+        throw new NotFoundError("Preferences not found")
+      }
+    } else {
+      throw new ForbiddenError("User is inactive")
+    }
+  } else {
+    throw new NotFoundError("User not found")
+  }
+}
+
+// ✅ Better — step 1 (extract) applied: every check pulled to the top as an early return/throw.
+// step 2 (arrange) skipped: `profile` and `preferences` are flattened as if independent from `user`,
+// hiding that each one can only be checked once the previous one passed
+function greet(user: User | null) {
+  if (!user) throw new NotFoundError("User not found")
+  if (!user.isActive) throw new ForbiddenError("User is inactive")
+  if (!user.profile) throw new NotFoundError("Profile not found")
+  if (!user.profile.preferences) throw new NotFoundError("Preferences not found")
+
+  if (user.isFirstVisit) {
+    return `Welcome, ${user.name}!`
+  } else {
+    return `Hello again, ${user.name}!`
+  }
+}
+
+// ✅✅ Even better — step 1 (extract) still applied, plus step 2 (arrange):
+// independent checks stay flat; the interdependent user → profile → preferences
+// chain is nested (else-if) as one connected decision
+function greet(user: User | null) {
+  if (!user) throw new NotFoundError("User not found")             // independent — flat
+  if (!user.isActive) throw new ForbiddenError("User is inactive")  // independent — flat
+
+  if (!user.profile) throw new NotFoundError("Profile not found")                     // interdependent —
+  else if (!user.profile.preferences) throw new NotFoundError("Preferences not found") // chained, not flattened
+
+  if (user.isFirstVisit) {                    // business logic — nesting is intentional, not a guard
+    return `Welcome, ${user.name}!`
+  } else {
+    return `Hello again, ${user.name}!`
+  }
+}
+```
+
+---
+
 ## Project specific coding rules
 
 ---
