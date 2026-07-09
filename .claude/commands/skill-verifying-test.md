@@ -19,7 +19,11 @@ Default: test files changed since main.
 git diff main --name-only -- 'api/tests/**'
 ```
 
-If the user specifies files, check those instead.
+If the user names exact files, check those instead.
+
+If the user describes scope in words instead (e.g. "all the tests", "everything under api/tests/routers"), resolve it yourself: first find the `.gitignore` files that apply to the target path — the root `.gitignore` plus any nested `.gitignore` found under that path — and exclude every directory and file pattern they list before building the file list. Do not walk the tree with a bare `find`/`ls`; that pulls in `.venv`, `__pycache__`, `.pytest_cache`, and similar directories.
+
+Before reading any files, count the resolved scope, however it was determined. If it exceeds 50 files, stop and use `AskUserQuestion` to show the count and confirm with the user before proceeding.
 
 ## Step 3 — Run the test suite
 
