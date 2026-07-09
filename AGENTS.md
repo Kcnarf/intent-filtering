@@ -33,11 +33,13 @@ When starting a new session, or when the user asks to implement a new feature or
 
         This file is the authoritative cross-session record. **No file edit is allowed until it exists.**
     3. ACT :
-      act by implementing the tasks of the TODO list
+      3.1. act by implementing the tasks of the TODO list
+      3.2. verify (invoke `/skill-verifying-code` or `/skill-verifying-test` as appropriate for the change just made); if no issue, ACT is finished; else go to 3.3 — after 2 failed verify passes, escalate to the human with the remaining findings instead of looping further
+      3.3. fix, and go back to 3.2
     - note: of course, developments and brainstorming with the human may impact the TODO list; in such a case, inform the human and ask for its approval
   - **clear separation of coding and testing tasks**: imperatively maintain strict separation between code and test changes, with Human-in-the-Loop (HITL) checkpoints. Two acceptable orderings:
-    - **TDD (preferred)**: Update tests → wait for human approval → write implementation → wait for human approval → run tests (they should pass)
-    - **Code-first**: Change code → wait for human approval → run tests → surface failures to human → propose test updates → wait for human approval → apply test fixes
+    - **TDD (preferred)**: Update tests → verify tests → wait for human approval → run tests (some should fail) → write implementation → verify code → wait for human approval → run tests (they should pass)
+    - **Code-first**: Change code → verify code → wait for human approval → run tests → surface failures to human → propose test updates → verify tests → wait for human approval → apply test fixes
   - **For multi-file changes**: If a task requires changes to more than 3 source files, stop and break it into smaller tasks first.
   - **Commits**: Never commit changes; the project maintainer handles this.
 
@@ -54,6 +56,10 @@ Read the `## Path` and `## TODO list` sections of any plan file to resume work f
 Coding and testing conventions are defined as skills. Invoke the relevant one before starting work, regardless of workflow mode:
 - `/skill-coding` — coding rules for implementation sessions
 - `/skill-testing` — testing rules for test sessions
+
+After making changes, invoke the matching verification skill, regardless of workflow mode:
+- `/skill-verifying-code` — verify coding conventions were applied
+- `/skill-verifying-test` — verify testing conventions were applied
 
 ## Project Overview
 
