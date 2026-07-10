@@ -72,6 +72,6 @@ Each task stays within the project's "≤3 source files per task" rule.
 - [x] **Task 1** — Extract `FilterChip.tsx` and `lib/filterSlots.ts` from `FilterChips.tsx`; no behavior change
 - [x] **Task 2** — Build `FilterRecap.tsx`; wire into desktop `<aside>` and mobile `SheetContent` (additive)
 - [x] **Task 3** — Remove the desktop chip grid from `FilterChips.tsx`
-- [ ] **Task 4** — Simplify mobile main-area block to active-only chips + Clear all + Filters button; drop unused props from `page.tsx`
+- [x] **Task 4** — Simplify mobile main-area block to active-only chips + Clear all + Filters button (props kept — still forwarded to `FilterRecap` in the sheet)
 - [ ] **Task 5** — Filters button label shows pending-change count
 - [ ] **Task 6** — Chip removal / Clear all (mobile) also opens the filter sheet (controlled `Sheet` state)
