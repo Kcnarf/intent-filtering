@@ -65,3 +65,7 @@ export function buildFilterSlots(activeFilters: FilterParamsBody, pendingFilters
 
   return slots
 }
+
+export function isSlotPending(slot: FilterSlot): boolean {
+  return (slot.activeChip?.label ?? null) !== (slot.pendingChip?.label ?? null)
+}

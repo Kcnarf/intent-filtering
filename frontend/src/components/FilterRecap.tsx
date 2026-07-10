@@ -1,6 +1,6 @@
 import { ArrowRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { buildFilterSlots } from "@/lib/filterSlots"
+import { buildFilterSlots, isSlotPending } from "@/lib/filterSlots"
 import { cn } from "@/lib/utils"
 import type { FilterParamsBody } from "@/lib/types"
 import { FilterChip } from "./FilterChip"
@@ -28,7 +28,6 @@ export function FilterRecap({ activeFilters, pendingFilters, hasPendingChanges, 
         {slots.map((slot) => {
           const activeChip = slot.activeChip
           const pendingChip = slot.pendingChip
-          const isSlotPending = (activeChip?.label ?? null) !== (pendingChip?.label ?? null)
           return (
             <span key={slot.key} className="inline-flex items-center gap-1.5">
               {activeChip ? (
@@ -41,7 +40,7 @@ export function FilterRecap({ activeFilters, pendingFilters, hasPendingChanges, 
               ) : (
                 <span className="text-xs italic text-muted-foreground">{slot.defaultLabel}</span>
               )}
-              {isSlotPending && (
+              {isSlotPending(slot) && (
                 <>
                   <ArrowRightIcon className="size-3 text-muted-foreground" />
                   {pendingChip ? (
@@ -66,7 +65,7 @@ export function FilterRecap({ activeFilters, pendingFilters, hasPendingChanges, 
           {hasPendingChanges && (
             <>
               <Button size="sm" className="h-6 px-2 text-xs" onClick={onApplyPendingFilters}>Apply filters</Button>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscardPendingFilters}>Discard</Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscardPendingFilters}>Discard changes</Button>
             </>
           )}
           {hasActiveFilters && (

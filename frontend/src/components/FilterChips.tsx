@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { buildFilterSlots, type FilterChipInfo, type FilterSlot } from "@/lib/filterSlots"
+import { buildFilterSlots, isSlotPending, type FilterChipInfo, type FilterSlot } from "@/lib/filterSlots"
 import type { FilterParamsBody } from "@/lib/types"
 import { FilterChip } from "./FilterChip"
 import { FilterPanel } from "./FilterPanel"
@@ -30,6 +30,8 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
   const slots = buildFilterSlots(activeFilters, pendingFilters)
   const hasActiveFilters  = slots.some((slot) => slot.activeChip !== null)
   const mobileActiveSlots = slots.filter((slot): slot is FilterSlot & { activeChip: FilterChipInfo } => slot.activeChip != null)
+  const pendingChangeCount = slots.filter(isSlotPending).length
+  const filtersButtonLabel = pendingChangeCount > 0 ? `Filters (${pendingChangeCount} pendings)` : "Filters"
 
   return (
     <div className="flex flex-wrap items-center gap-2 lg:hidden">
@@ -49,7 +51,7 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
         <Sheet>
           <SheetTrigger render={<Button variant="outline" size="sm" className="h-7 gap-1.5" />}>
             <SlidersHorizontalIcon className="size-3.5" />
-            Filters
+            {filtersButtonLabel}
           </SheetTrigger>
           <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
             <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
