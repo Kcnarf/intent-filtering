@@ -46,6 +46,11 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
     setSheetOpen(true)
   }
 
+  function applyPendingFiltersAndCloseSheet() {
+    onApplyPendingFilters()
+    setSheetOpen(false)
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2 lg:hidden">
       {mobileActiveSlots.map((slot) => (
@@ -75,7 +80,7 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
                 hasPendingChanges={hasPendingChanges}
                 onPendingChange={onPendingChange}
                 onClearAll={onClearAll}
-                onApplyPendingFilters={onApplyPendingFilters}
+                onApplyPendingFilters={applyPendingFiltersAndCloseSheet}
                 onDiscardPendingFilters={onDiscardPendingFilters}
                 className="bg-popover"
               />
