@@ -110,59 +110,6 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
         </div>
       </div>
 
-      {/* ── Desktop grid layout (≥ lg) ───────────────────────── */}
-      {slots.length > 0 && (
-        <div
-          className="hidden lg:grid lg:items-center lg:gap-x-3 lg:gap-y-1.5"
-          style={{ gridTemplateColumns: `repeat(${slots.length}, auto) 1fr` }}
-        >
-          {/* Pending row */}
-          {hasPendingChanges && (
-            <>
-              {slots.map((slot) => {
-                const pendingChip = slot.pendingChip
-                return pendingChip ? (
-                  <FilterChip
-                    key={`p-${slot.key}`}
-                    label={pendingChip.label}
-                    onRemove={() => onPendingChange(pendingChip.clear)}
-                    variant="pending"
-                    ariaLabel={`Remove pending ${pendingChip.label} filter`}
-                  />
-                ) : (
-                  <span key={`p-${slot.key}`} className="text-xs italic text-muted-foreground">{slot.defaultLabel}</span>
-                )
-              })}
-              <div className="flex justify-end gap-2">
-                <Button size="sm" className="h-6 px-2 text-xs" onClick={onApplyPendingFilters}>Apply filters</Button>
-                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onDiscardPendingFilters}>Discard</Button>
-              </div>
-            </>
-          )}
-
-          {/* Active row */}
-          {slots.map((slot) => {
-            const activeChip = slot.activeChip
-            return activeChip ? (
-              <FilterChip
-                key={`a-${slot.key}`}
-                label={activeChip.label}
-                onRemove={() => onPendingChange(activeChip.clear)}
-                variant="active"
-                ariaLabel={`Remove ${activeChip.label} filter`}
-              />
-            ) : (
-              <span key={`a-${slot.key}`} className="text-xs italic text-muted-foreground">{slot.defaultLabel}</span>
-            )
-          })}
-          <div className="flex justify-end gap-2">
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onClearAll}>Clear all</Button>
-            )}
-          </div>
-        </div>
-      )}
-
     </div>
   )
 }
