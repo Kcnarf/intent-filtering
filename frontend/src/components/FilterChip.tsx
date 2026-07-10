@@ -14,14 +14,14 @@ export function FilterChip({ label, onRemove, variant, ariaLabel }: FilterChipPr
     <span className={cn(
       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
       isPending
-        ? "border-primary bg-primary/10 text-primary"
-        : "border-border bg-secondary text-secondary-foreground"
+        ? "border-border bg-secondary text-secondary-foreground"
+        : "border-primary bg-primary/10 text-primary"
     )}>
       {label}
       <button
         type="button"
         onClick={onRemove}
-        className={cn("rounded-full p-0.5", isPending ? "hover:bg-primary/20" : "hover:bg-foreground/10")}
+        className={cn("rounded-full p-0.5", isPending ? "hover:bg-foreground/10" : "hover:bg-primary/20")}
         aria-label={ariaLabel}
       >
         <XIcon className="size-3" />

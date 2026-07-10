@@ -16,7 +16,11 @@ interface BigNumberProps {
 
 export function BigNumber({ type, value, children }: BigNumberProps) {
   return (
-    <Card>
+    <Card
+      style={{
+        backgroundImage: "linear-gradient(145deg, oklch(0.556 0 0 / 0) 0%, oklch(0.6 0.185 87) 100%)",
+      }}
+    >
       <CardHeader>
         <CardTitle className="text-muted-foreground text-sm font-medium uppercase tracking-wide">
           {LABELS[type]}
