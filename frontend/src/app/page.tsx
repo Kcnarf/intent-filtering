@@ -7,6 +7,7 @@ import type { FilterParams, FilterParamsBody, MovieOut, MoviesStatOut, SortDirec
 import { BigNumber } from "@/components/BigNumber"
 import { FilterChips } from "@/components/FilterChips"
 import { FilterPanel } from "@/components/FilterPanel"
+import { FilterRecap } from "@/components/FilterRecap"
 import { IntentInput } from "@/components/IntentInput"
 import { MiniScoreBars } from "@/components/MiniScoreBars"
 import { MovieList } from "@/components/MovieList"
@@ -91,6 +92,15 @@ export default function Home() {
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Sidebar — desktop only */}
         <aside className="hidden w-72 shrink-0 flex-col gap-6 border-r p-6 lg:flex">
+          <FilterRecap
+            activeFilters={activeFilters}
+            pendingFilters={pendingFilters}
+            hasPendingChanges={hasPendingChanges}
+            onPendingChange={updatePending}
+            onClearAll={clearAll}
+            onApplyPendingFilters={applyPendingFilters}
+            onDiscardPendingFilters={discardPendingFilters}
+          />
           <IntentInput contextFilters={pendingFilters} onPendingChange={updatePending} />
           <FilterPanel filters={pendingFilters} onPendingChange={updatePending} />
         </aside>

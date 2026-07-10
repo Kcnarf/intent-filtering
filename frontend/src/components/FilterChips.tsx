@@ -13,6 +13,7 @@ import { buildFilterSlots, type FilterChipInfo, type FilterSlot } from "@/lib/fi
 import type { FilterParamsBody } from "@/lib/types"
 import { FilterChip } from "./FilterChip"
 import { FilterPanel } from "./FilterPanel"
+import { FilterRecap } from "./FilterRecap"
 import { IntentInput } from "./IntentInput"
 
 interface FilterChipsProps {
@@ -41,6 +42,18 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
         <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
+        <div className="px-4 pt-2">
+          <FilterRecap
+            activeFilters={activeFilters}
+            pendingFilters={pendingFilters}
+            hasPendingChanges={hasPendingChanges}
+            onPendingChange={onPendingChange}
+            onClearAll={onClearAll}
+            onApplyPendingFilters={onApplyPendingFilters}
+            onDiscardPendingFilters={onDiscardPendingFilters}
+            className="bg-popover"
+          />
+        </div>
         <div className="p-4 pt-2">
           <IntentInput contextFilters={pendingFilters} onPendingChange={onPendingChange} />
         </div>
