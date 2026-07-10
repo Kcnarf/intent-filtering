@@ -1,6 +1,6 @@
 "use client"
 
-import { XIcon, SlidersHorizontalIcon } from "lucide-react"
+import { SlidersHorizontalIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -9,109 +9,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { buildFilterSlots, type FilterChipInfo, type FilterSlot } from "@/lib/filterSlots"
 import type { FilterParamsBody } from "@/lib/types"
-import { cn, formatVotes } from "@/lib/utils"
+import { FilterChip } from "./FilterChip"
 import { FilterPanel } from "./FilterPanel"
 import { IntentInput } from "./IntentInput"
-
-interface ActiveChip {
-  label: string
-  clear: Partial<FilterParamsBody>
-}
-
-interface PendingChip {
-  label: string
-  clear: Partial<FilterParamsBody>
-}
-
-interface GridSlot {
-  key: string
-  defaultLabel: string
-  activeChip: ActiveChip | null
-  pendingChip: PendingChip | null
-}
-
-interface FilterChipProps {
-  label: string
-  onRemove: () => void
-  variant: "active" | "pending"
-  ariaLabel: string
-}
-
-function FilterChip({ label, onRemove, variant, ariaLabel }: FilterChipProps) {
-  const isPending = variant === "pending"
-  return (
-    <span className={cn(
-      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-      isPending
-        ? "border-primary bg-primary/10 text-primary"
-        : "border-border bg-secondary text-secondary-foreground"
-    )}>
-      {label}
-      <button
-        type="button"
-        onClick={onRemove}
-        className={cn("rounded-full p-0.5", isPending ? "hover:bg-primary/20" : "hover:bg-foreground/10")}
-        aria-label={ariaLabel}
-      >
-        <XIcon className="size-3" />
-      </button>
-    </span>
-  )
-}
-
-function yearLabel(filters: FilterParamsBody): string {
-  if (filters.year_min && filters.year_max) return `${filters.year_min}–${filters.year_max}`
-  if (filters.year_min) return `From ${filters.year_min}`
-  if (filters.year_max) return `Until ${filters.year_max}`
-  return ""
-}
-
-function buildGridSlots(activeFilters: FilterParamsBody, pendingFilters: FilterParamsBody): GridSlot[] {
-  const slots: GridSlot[] = []
-
-  const aOr = activeFilters.genres_or?.length ? activeFilters.genres_or : null
-  const pOr = pendingFilters.genres_or?.length ? pendingFilters.genres_or : null
-  if (aOr || pOr) slots.push({
-    key: "genres_or", defaultLabel: "All genres",
-    activeChip:  aOr ? { label: aOr.join(" or "),  clear: { genres_or: undefined } } : null,
-    pendingChip: pOr ? { label: pOr.join(" or "),  clear: { genres_or: undefined } } : null,
-  })
-
-  const aAnd = activeFilters.genres_and?.length ? activeFilters.genres_and : null
-  const pAnd = pendingFilters.genres_and?.length ? pendingFilters.genres_and : null
-  if (aAnd || pAnd) slots.push({
-    key: "genres_and", defaultLabel: "All genres",
-    activeChip:  aAnd ? { label: aAnd.join(" + "), clear: { genres_and: undefined } } : null,
-    pendingChip: pAnd ? { label: pAnd.join(" + "), clear: { genres_and: undefined } } : null,
-  })
-
-  const aYear = activeFilters.year_min || activeFilters.year_max
-  const pYear = pendingFilters.year_min || pendingFilters.year_max
-  if (aYear || pYear) slots.push({
-    key: "year", defaultLabel: "Any year",
-    activeChip:  aYear ? { label: yearLabel(activeFilters),  clear: { year_min: undefined, year_max: undefined } } : null,
-    pendingChip: pYear ? { label: yearLabel(pendingFilters), clear: { year_min: undefined, year_max: undefined } } : null,
-  })
-
-  const aRating = activeFilters.rating_min ?? null
-  const pRating = pendingFilters.rating_min ?? null
-  if (aRating || pRating) slots.push({
-    key: "rating_min", defaultLabel: "Any rating",
-    activeChip:  aRating ? { label: `Rating ≥ ${aRating.toFixed(1)}`, clear: { rating_min: undefined } } : null,
-    pendingChip: pRating ? { label: `Rating ≥ ${pRating.toFixed(1)}`, clear: { rating_min: undefined } } : null,
-  })
-
-  const aVotes = activeFilters.votes_min ?? null
-  const pVotes = pendingFilters.votes_min ?? null
-  if (aVotes || pVotes) slots.push({
-    key: "votes_min", defaultLabel: "Any votes",
-    activeChip:  aVotes ? { label: `Votes ≥ ${formatVotes(aVotes)}`, clear: { votes_min: undefined } } : null,
-    pendingChip: pVotes ? { label: `Votes ≥ ${formatVotes(pVotes)}`, clear: { votes_min: undefined } } : null,
-  })
-
-  return slots
-}
 
 interface FilterChipsProps {
   activeFilters: FilterParamsBody
@@ -124,12 +26,12 @@ interface FilterChipsProps {
 }
 
 export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, onPendingChange, onClearAll, onApplyPendingFilters, onDiscardPendingFilters }: FilterChipsProps) {
-  const slots = buildGridSlots(activeFilters, pendingFilters)
+  const slots = buildFilterSlots(activeFilters, pendingFilters)
   const hasActiveFilters  = slots.some((slot) => slot.activeChip  !== null)
   const hasPendingFilters = slots.some((slot) => slot.pendingChip !== null)
 
-  const mobilePendingSlots = slots.filter((slot): slot is GridSlot & { pendingChip: PendingChip } => slot.pendingChip != null)
-  const mobileActiveSlots  = slots.filter((slot): slot is GridSlot & { activeChip: ActiveChip }  => slot.activeChip  != null)
+  const mobilePendingSlots = slots.filter((slot): slot is FilterSlot & { pendingChip: FilterChipInfo } => slot.pendingChip != null)
+  const mobileActiveSlots  = slots.filter((slot): slot is FilterSlot & { activeChip: FilterChipInfo }  => slot.activeChip  != null)
 
   const filtersSheet = (
     <Sheet>
