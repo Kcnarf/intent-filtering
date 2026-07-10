@@ -1,6 +1,7 @@
 "use client"
 
 import { SlidersHorizontalIcon } from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -27,11 +28,23 @@ interface FilterChipsProps {
 }
 
 export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, onPendingChange, onClearAll, onApplyPendingFilters, onDiscardPendingFilters }: FilterChipsProps) {
+  const [sheetOpen, setSheetOpen] = useState(false)
+
   const slots = buildFilterSlots(activeFilters, pendingFilters)
   const hasActiveFilters  = slots.some((slot) => slot.activeChip !== null)
   const mobileActiveSlots = slots.filter((slot): slot is FilterSlot & { activeChip: FilterChipInfo } => slot.activeChip != null)
   const pendingChangeCount = slots.filter(isSlotPending).length
   const filtersButtonLabel = pendingChangeCount > 0 ? `Filters (${pendingChangeCount} pendings)` : "Filters"
+
+  function removeActiveChip(clear: Partial<FilterParamsBody>) {
+    onPendingChange(clear)
+    setSheetOpen(true)
+  }
+
+  function clearAllAndOpenSheet() {
+    onClearAll()
+    setSheetOpen(true)
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2 lg:hidden">
@@ -39,16 +52,16 @@ export function FilterChips({ activeFilters, pendingFilters, hasPendingChanges, 
         <FilterChip
           key={slot.key}
           label={slot.activeChip.label}
-          onRemove={() => onPendingChange(slot.activeChip.clear)}
+          onRemove={() => removeActiveChip(slot.activeChip.clear)}
           variant="active"
           ariaLabel={`Remove ${slot.activeChip.label} filter`}
         />
       ))}
       <div className="ml-auto flex items-center gap-2">
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onClearAll}>Clear all</Button>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={clearAllAndOpenSheet}>Clear all</Button>
         )}
-        <Sheet>
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger render={<Button variant="outline" size="sm" className="h-7 gap-1.5" />}>
             <SlidersHorizontalIcon className="size-3.5" />
             {filtersButtonLabel}

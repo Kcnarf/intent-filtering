@@ -74,4 +74,4 @@ Each task stays within the project's "≤3 source files per task" rule.
 - [x] **Task 3** — Remove the desktop chip grid from `FilterChips.tsx`
 - [x] **Task 4** — Simplify mobile main-area block to active-only chips + Clear all + Filters button (props kept — still forwarded to `FilterRecap` in the sheet)
 - [x] **Task 5** — Filters button label shows pending-change count (extracted shared `isSlotPending` helper to `lib/filterSlots.ts` for DRY)
-- [ ] **Task 6** — Chip removal / Clear all (mobile) also opens the filter sheet (controlled `Sheet` state)
+- [x] **Task 6** — Chip removal / Clear all (mobile) also opens the filter sheet (controlled `Sheet` state)
